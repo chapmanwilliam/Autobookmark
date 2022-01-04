@@ -307,7 +307,7 @@ class display():
             self.saveOptions(options)
             self.updatestatusBar('Saving...')
             self.doc.save(self.filepath)
-            self.updatestatusBar('Saved...')
+            self.updatestatusBar('Saved')
             self.displayWindow.title(os.path.basename(self.filepath))
 
     def save(self):
@@ -316,7 +316,7 @@ class display():
             if self.doc.can_save_incrementally():
                 self.updatestatusBar('Saving...')
                 self.doc.saveIncr()
-                self.updatestatusBar('Saved...')
+                self.updatestatusBar('Saved')
             else:
                 self.filepath = filedialog.asksaveasfilename(initialdir=self.options['lastfilePath'], title="Select file",
                                                            filetypes=(("pdf files", "*.pdf"), ("all files", "*.*")))
@@ -324,7 +324,7 @@ class display():
                 if self.filepath:
                     self.updatestatusBar('Saving...')
                     self.doc.save(self.filepath)
-                    self.updatestatusBar('Saved...')
+                    self.updatestatusBar('Saved')
 
     def printPDF(self):
         printDialog(self.displayWindow,self.doc)

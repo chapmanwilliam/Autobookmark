@@ -215,7 +215,7 @@ def get_labels_each_page(f, f_name):
     '''doc=slate.PDF(f)'''
     p = PdfFileReader(f)
     a = get_toc(f_name)
-    print(a)
+    # print(a)
     pages = []
     for z in range(0, NO_PAGES):
         empty_list = []
@@ -1045,7 +1045,7 @@ def do_email_this_page(page, nextpage, input, output, Lts):
         f_txt = tidy_right_bit_from(get_right_bit(each_fr, chunks))
         print("Chunks with dates: ", get_chunks_with_dates(chunks))
         n_chunk = get_nearest_chunk_within_x_lines(each_fr,
-                                                   get_chunks_with_dates(chunks))
+                                                   get_chunks_with_dates(chunks),8)
         print("Nearest chunk with date: ", n_chunk)
         Dt, date_txt = None, None
         if n_chunk:
@@ -1642,11 +1642,16 @@ def do(f_name, doc, display=None):
 
 def copyTOC(ftree, output):
     # Write bookmarks for children of this node
+    print (output.getNumPages())
     def WriteChildren(CurrentNode, CurrentBookMark):
         if (CurrentNode.identifier != 0):  # i.e. skip root
             BkMkData = CurrentNode.data
             print(BkMkData.title, BkMkData.pageno)
-            CurrentBookMark = output.addBookmark(title=BkMkData.title, pagenum=BkMkData.pageno, parent=CurrentBookMark)
+            try:
+                CurrentBookMark = output.addBookmark(title=BkMkData.title, pagenum=BkMkData.pageno, parent=CurrentBookMark)
+            except Exception as e:
+                print(f"Error {e}")
+                pass
         for ChildNode in ftree.children(CurrentNode.identifier):
             WriteChildren(ChildNode, CurrentBookMark)
 

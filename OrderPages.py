@@ -9,7 +9,7 @@ def orderPages(doc, display=None):
     sortRoutines(BkMks,doc.pageCount)
     MoveThePages(BkMks,doc)
     refillBkMks(BkMks,doc)
-    if display: display.updatestatusBar('Ordered pages...')
+    if display: display.updatestatusBar('Ordered pages')
 
 def refillBkMks(BkMks,doc):
     newTOCs=[]
@@ -22,10 +22,14 @@ def refillBkMks(BkMks,doc):
 def fillBkMks(doc):
     #Fill array of bookmarks, noting the order in which they appear and the pages to which they point
     BkMks=[]
-    TOC = doc.getToC()
+    TOC = doc.getToC(simple=False)
     count=0
     for t in TOC:
-        BkMk={'BkMk': t, 'pg': t[2]-1, 'order': count, 'chunk':0, 'pgEnd':0}
+        dict=t[-1]
+        italic=False
+        if 'italic' in dict:
+            italic=True
+        BkMk={'BkMk': t, 'pg': t[2]-1, 'order': count, 'chunk':0, 'pgEnd':0, 'italic': italic}
         BkMks.append(BkMk)
         count +=1
     return BkMks
@@ -33,7 +37,7 @@ def fillBkMks(doc):
 def sortRoutines(BkMks, pgCount):
     global nCurPage
 
-    def byPg(e):
+    def byPg(e): #put all the italics to the end
         return e['pg']
     def byOrder(e):
         return e['order']
