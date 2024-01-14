@@ -59,7 +59,7 @@ def delete_toc(doc, options=None, display=None, addHistory=True):
 
     if not stPage==None and not enPage==None:
         if display: display.updatestatusBar('About to delete pages')
-        doc.deletePageRange(stPage, enPage)
+        doc.delete_pages(stPage, enPage)
         no_pages = (enPage - stPage) + 1
         if display: display.updatestatusBar('Deleted pages')
 
@@ -102,7 +102,7 @@ def write_toc(doc, options, display=None, addHistory=True):
         words=title.split() #split into words
         line=0 #which line we are on
         for word in words: #iterate each word
-            line_width =indent + fitz.getTextlength(text=lines[line] + word, fontsize=font_size)
+            line_width =indent + fitz.get_text_length(text=lines[line] + word, fontsize=font_size)
             if line_width>page.rect.width-options['margin'] - width_pageref:
                 #then we put this word onto newline
                 lines.append("")
@@ -115,8 +115,8 @@ def write_toc(doc, options, display=None, addHistory=True):
 
     def add_page():
         #adds a page
-        fmt = fitz.PaperRect("a4")
-        new_doc.newPage(width=fmt.width, height=fmt.height)
+        fmt = fitz.paper_rect("a4")
+        new_doc.new_page(width=fmt.width, height=fmt.height)
         return new_doc[- 1]
 
     if isTOC(doc): delete_toc(doc,options, display,addHistory=False)
@@ -137,8 +137,8 @@ def write_toc(doc, options, display=None, addHistory=True):
     ls = breaktext(options['title'], page, font_size, indent, 0)  # break long text into lines
     for l in ls:
         y+=1.2 * font_size
-        page.insertText(point=(indent, y), text=l, fontsize=font_size) #the title
-    page.drawLine(p1=(options['margin'], y + (0.2 * font_size)), p2=(w - options['margin'], y + (0.2 * font_size)),
+        page.insert_text(point=(indent, y), text=l, fontsize=font_size) #the title
+    page.draw_line(p1=(options['margin'], y + (0.2 * font_size)), p2=(w - options['margin'], y + (0.2 * font_size)),
                   color=(0, 0, 0))
     y += 10  # gap under contents line
     count = 0
@@ -165,7 +165,7 @@ def write_toc(doc, options, display=None, addHistory=True):
                 indent = options['margin'] + 10 * level
 
 
-            width_pageref = fitz.getTextlength(text=pg_label, fontsize=font_size)
+            width_pageref = fitz.get_text_length(text=pg_label, fontsize=font_size)
 
             ls=breaktext(title,page,font_size, indent, width_pageref) #break long text into lines
             if (y + len(ls)*font_size) + (len(ls)-1)*(0.2*font_size) + options['margin'] > h:
@@ -173,13 +173,13 @@ def write_toc(doc, options, display=None, addHistory=True):
                 y = options['margin']
             for l in ls:
                 y += 1.2 * font_size
-                page.insertText(point=(indent, y), text=l, fontsize=font_size, color=colour) #insert main text
-                width_text = fitz.getTextlength(text=l, fontsize=font_size)
+                page.insert_text(point=(indent, y), text=l, fontsize=font_size, color=colour) #insert main text
+                width_text = fitz.get_text_length(text=l, fontsize=font_size)
 
-            page.drawLine(p1=(indent + width_text + 2, y - 0.25 * font_size * 1.2),
+            page.draw_line(p1=(indent + width_text + 2, y - 0.25 * font_size * 1.2),
                           p2=(w - options['margin'] - width_pageref - 2, y - 0.25 * font_size * 1.2), color=colour,
                           dashes="[3] 0")
-            page.insertText(point=((w - options['margin']) - width_pageref, y), text=pg_label, fontsize=font_size,
+            page.insert_text(point=((w - options['margin']) - width_pageref, y), text=pg_label, fontsize=font_size,
                             color=colour) #insert page label
             # add link
             stY=y-(len(ls)-1)*(1.2 * font_size)
@@ -198,7 +198,7 @@ def write_toc(doc, options, display=None, addHistory=True):
     display.insertPages(new_doc,0)
     for l in lnks:
         l['link']['page']+=new_doc.page_count
-        doc[l['pgNo']].insertLink(l['link'])
+        doc[l['pgNo']].insert_link(l['link'])
     new_doc.close()
     display.readTree()
     if addHistory: display.adddocHistory({'code':'DOC_addtoc', 'options':options})

@@ -63,7 +63,7 @@ def paginate(doc, options, display=None, addHistory=True):
             r = page.rect
             txt = page.get_label()
             if not isTOCPage(page):  # skip TOC pages
-                width = fitz.getTextlength(txt, fontname="helv", fontsize=options['Size'])
+                width = fitz.get_text_length(txt, fontname="helv", fontsize=options['Size'])
                 height = options['Size']
 
                 top = r[1] + options['vMargin']*72
@@ -92,7 +92,7 @@ def paginate(doc, options, display=None, addHistory=True):
                     r[0] = right - width
                     r[2] = right
 
-                annot = page.addFreetextAnnot(rect=r * page.derotationMatrix, text=txt, fontname=fontn, fontsize=options['Size'],
+                annot = page.add_freetext_annot(rect=r * page.derotation_matrix, text=txt, fontname=fontn, fontsize=options['Size'],
                                               fill_color=None)
                 annot.update(text_color=get_colour(options['Colour']), fill_color=None, rotate=page.rotation - 360)
                 if display: display.dlist_tab[pgNo]=None
@@ -134,7 +134,7 @@ def remove_pagination(doc, options, display=None, addHistory=True):
                 info = annot.info
                 id = info['id']
                 if id.find(annot_name + suffix) > -1:
-                    page.deleteAnnot(annot)
+                    page.delete_annot(annot)
                     if display: display.dlist_tab[pgNo]=None
             count += 1
             percentComplete = int((float(count) / float(total)) * 100)

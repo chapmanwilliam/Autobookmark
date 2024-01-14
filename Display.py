@@ -32,7 +32,6 @@ import tkinter.ttk as ttk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 
-
 class thumbnail(tk.Button):
     def __init__(self, parent, page, img, buttonFrame, display, **kw):
         super().__init__(parent, **kw)
@@ -210,9 +209,9 @@ class display():
         #sets buttons and toolbars
         if self.doc:
             if PG.isPaginated(self.doc):
-                self.toolsMenu.entryconfigure(0,label='Remove pagination') #Paginate
+                self.toolsMenu.entryconfigure(1,label='Remove pagination') #Paginate
             else:
-                self.toolsMenu.entryconfigure(0,label='Paginate') #Paginate
+                self.toolsMenu.entryconfigure(1,label='Paginate') #Paginate
             if TC.isTOC(self.doc, self):
                 self.toolsMenu.entryconfigure(1,label='Remove TOC') #TOC
             else:
@@ -221,6 +220,7 @@ class display():
 
     def reset(self):
         openFiles[self.id] = {'filepath': self.filepath, 'class': self}
+        print('got here')
         try:
             if self.doc:
                 self.doc.add_default_label()
@@ -432,7 +432,7 @@ class display():
         self.doc.add_default_label()
         pagesPDF.add_default_label()
         newLbs=getnewPgLabels(pagesPDF)
-        self.doc.insertPDF(docsrc=pagesPDF,start_at=pg)
+        self.doc.insert_pdf(docsrc=pagesPDF,start_at=pg)
         self.doc.set_page_labels(newLbs)
         adjustTOC(pg,pagesPDF.page_count)
 
@@ -794,7 +794,8 @@ class display():
             self.docHistoryIndex -= 1
 
     def mirrorinChronoTree(self,id, sort=False):
-        dt=getdatefromText(', '+self.tree.item(id)['values'][0])
+        print(self.tree.item(id)['values'][0])
+        dt=getdatefromText(', ' + str(self.tree.item(id)['values'][0]))
         dy=getdayofWeek(dt)
         if self.chronotree.exists(id):
             if dt:
@@ -1452,7 +1453,7 @@ class display():
                 d['color']=col['colour']
                 d['italic']=col['italic']
                 d['bold']=col['bold']
-                self.doc.set_toc_item(col['index'],dest_dict=d)
+                #self.doc.set_toc_item(col['index'],dest_dict=d)
 
 
 
