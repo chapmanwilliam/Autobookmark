@@ -107,7 +107,7 @@ def parse_page_string(doc, txt):
     # returns list of pages or None if bad page labels provided
     l = []
     if txt == "":  # i.e. a blank entry then all pages
-        for i in range(0, doc.pageCount):
+        for i in range(0, doc.page_count):
             l.append(i)
     else:
         # parse each bit
@@ -139,7 +139,7 @@ def parse_page_string(doc, txt):
 
 def max_depth(doc):
     # returns max-depth of bookmarks
-    toc = doc.getToC()
+    toc = doc.get_toc()
     max_depth = 0
     for t in toc:
         level = t[0]
@@ -172,7 +172,7 @@ def selectWord(page, point):
 def getWord(page,point):
     #returns tuple of rect and text of word at point point
     #or None if none at this point
-    for w in page.getText('words'):
+    for w in page.get_text('words'):
         rect=fitz.Rect(w[:4])
         if point in rect:
             return (rect, w[4])
@@ -180,7 +180,7 @@ def getWord(page,point):
 
 def getchar(page,point):
     #returns the character at point on page
-    dict = page.getText('rawdict')
+    dict = page.get_text('rawdict')
     blocks = [b for b in dict['blocks'] if point in fitz.Rect(b['bbox']) and b['type'] == 0]
     if len(blocks) > 0:
         lines = [l for l in blocks[0]['lines'] if point in fitz.Rect(l['bbox'])]
@@ -197,14 +197,14 @@ def remove_draw_links(page):
     #removes drawn links on page
     for annot in page.annots():
         if annot.info['id'].find(annot_name + "linkunderlining") > -1:
-            page.deleteAnnot(annot)
+            page.delete_annot(annot)
 
 def draw_links(page):
     #adds underlining for links on page
     fitz.TOOLS.set_annot_stem(annot_name + "linkunderlining")
-    lnks = page.getLinks()
+    lnks = page.get_links()
     for lnk in lnks:
-        annot=page.addUnderlineAnnot(lnk['from'])
+        annot=page.add_underline_annot(lnk['from'])
         blue = (0, 0, 1)
         annot.set_colors({"stroke":blue})
         annot.update()
@@ -212,7 +212,7 @@ def draw_links(page):
 def link_clicked(page,point):
     #returns link if point within link
     #point needs to be converted to pdfPoint
-    lnks = page.getLinks()
+    lnks = page.get_links()
     for lnk in lnks:
         if point in fitz.Rect(lnk['from']):
             return lnk
@@ -220,8 +220,8 @@ def link_clicked(page,point):
 
 def inTextArea(page,point):
     #returns True if in text area or else False
-    dict = page.getText('rawdict')
-    blocks=[block for block in page.getText('rawdict')['blocks'] if block['type']==0]
+    dict = page.get_text('rawdict')
+    blocks=[block for block in page.get_text('rawdict')['blocks'] if block['type']==0]
     for block in blocks:
         if point in fitz.Rect(block['bbox']):
             return True
@@ -322,7 +322,7 @@ def highlightSelection(page, colour=None):
 
 def removeSelection(page):
     #removes the select annotations
-    [page.deleteAnnot(annot) for annot in page.annots() if annot.info['id'].find(annot_name + "select-highlight") > -1]
+    [page.delete_annot(annot) for annot in page.annots() if annot.info['id'].find(annot_name + "select-highlight") > -1]
 
 def select(page, startPoint, endPoint):
     #removes any existing selection and then
@@ -332,8 +332,8 @@ def select(page, startPoint, endPoint):
     rects=[fitz.Rect(s['bbox']) for s in page.getselectSpans(startPoint,endPoint)]
     if rects:
         page.removeSelection()
-        annot = page.addHighlightAnnot(rects)
-        annot.setColors({"stroke": (0.6,0.8,1)}) #light blue
+        annot = page.add_highlight_annot(rects)
+        annot.set_colors({"stroke": (0.6,0.8,1)}) #light blue
         annot.update()
         return annot.xref
     return None
@@ -372,7 +372,7 @@ def getselectSpans(page, startPoint, endPoint):
     pageRect = page.rect
     B = fitz.Rect(pageRect[0], startPoint.y, pageRect[2], endPoint.y) #big rect
 
-    dict=page.getText('rawdict')
+    dict=page.get_text('rawdict')
     blocks = [b for b in dict['blocks'] if b['type'] == 0 and intersect(fitz.Rect(b['bbox']),B)]
     for block in blocks:
         lines=[l for l in block['lines'] if intersect(fitz.Rect(l['bbox']),B)]

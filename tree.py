@@ -79,7 +79,7 @@ class EntryPopup(tk.Entry):
                 # fcheck page exists
                 if self.get().isdigit():
                     pg = int(self.get()) - 1
-                    if pg > -0 and pg < self.display.doc.pageCount:
+                    if pg > -0 and pg < self.display.doc.page_count:
                         oldpgLabel=self.tv.item(self.iid)['values'][1]
                         oldpgNo=self.tv.item(self.iid)['values'][2]
                         self.tv.set(self.iid, self.col - 1, self.get())
@@ -155,7 +155,7 @@ class EntryPopupChrono(EntryPopup):
             if self.col == 4:  # i.e. page
                 # check page exists
                 pg = int(self.get()) - 1
-                if pg > -0 and pg < self.display.doc.pageCount:
+                if pg > -0 and pg < self.display.doc.page_count:
                     oldpgLabel=self.item(self.iid)['values'][2]
                     oldpgNo=self.item(self.iid)['values'][3]
                     self.tv.set(self.iid, self.col - 1, self.get())
@@ -399,7 +399,7 @@ class treeClone(ttk.Treeview):
             if sibling:
                 endPg=self.display.doc[self.item(sibling)['values'][2]-2].get_label()
             else:
-                endPg=self.display.doc[self.display.doc.pageCount-1].get_label()
+                endPg=self.display.doc[self.display.doc.page_count-1].get_label()
             rangeStr.append(str(startPg) + "-" + str(endPg))
         result=','.join(rangeStr)
         print (result)
@@ -407,7 +407,7 @@ class treeClone(ttk.Treeview):
 
     def sort(self, options=None):
 
-        oldToc=self.display.doc.getToC(simple=False)
+        oldToc=self.display.doc.get_toc(simple=False)
 
         if options['column'] == '#0':
             self.display.updatestatusBar('Sorting tree A-Z...')
@@ -473,7 +473,7 @@ class treeClone(ttk.Treeview):
 
         self.display.readTree()
 
-        newToc=self.display.doc.getToC(simple=False)
+        newToc=self.display.doc.get_toc(simple=False)
 
         self.display.adddocHistory({'code':"TOC_sorted", "old_toc":oldToc, "new_toc":newToc})
 
@@ -515,9 +515,9 @@ class treeClone(ttk.Treeview):
         self.bind('<BackSpace>', self.bDelete)
         self.bind('<Delete>', self.bDelete)
         if 'win32' in sys.platform:  # windows
-            self.bind("<Control-b>", self.addbookMark)
+            self.bind("<Control-b>", self.add_outline_item)
         elif 'darwin' in sys.platform: #mac os
-            self.bind("<Command-b>", self.addbookMark)
+            self.bind("<Command-b>", self.add_outline_item)
         else:
             raise RuntimeError("Unsupported operating system")
 
@@ -565,7 +565,7 @@ class treeClone(ttk.Treeview):
         if not self.display.doc: return
         self.emptyTree()
         if chronotree: chronotree.emptyTree()
-        TOC = self.display.doc.getToC(simple=False)
+        TOC = self.display.doc.get_toc(simple=False)
         ids = [None] * 100
         ids[0]=''
         c=0
@@ -695,9 +695,9 @@ class treeClone(ttk.Treeview):
         for i in range(select[0], select[-1] + 1, 1):
             tv.selection_add(tv.get_children(parent)[i])
 
-    def addbookMark(self,event):
+    def add_outline_item(self,event):
         if not self.display.doc: return
-        if self.display.doc.pageCount==0: return
+        if self.display.doc.page_count==0: return
         print('adding bookmark')
         tv = self
         x = tv.selection()

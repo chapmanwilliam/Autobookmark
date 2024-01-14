@@ -19,7 +19,7 @@ suffix='links'
 def remove_links(doc, display, options=None):
     display.updatestatusBar("Removing hyperlinking...")
 
-    page_range = '1-' + doc[doc.pageCount-1].get_label() #default
+    page_range = '1-' + doc[doc.page_count-1].get_label() #default
 
     if options:
         if 'pgRange' in options:
@@ -30,7 +30,7 @@ def remove_links(doc, display, options=None):
             options['close'] = False
     else:
         options = {'save': True, 'close': True}
-        page_range = '1-' + str(doc.pageCount)
+        page_range = '1-' + str(doc.page_count)
 
     a = doc.parse_page_string(page_range)  # list of pages to consider
     if a:
@@ -56,7 +56,7 @@ def hyperlink(doc, display, options=None):
     display.updatestatusBar("Starting hyperlinking...")
     fitz.TOOLS.set_annot_stem(annot_name+suffix)
 
-    page_range = '1-' + doc[doc.pageCount-1].get_label() #default
+    page_range = '1-' + doc[doc.page_count-1].get_label() #default
     filename = doc.name
 
     if options:
@@ -68,7 +68,7 @@ def hyperlink(doc, display, options=None):
             options['close'] = False
     else:
         options = {'save': False, 'close': False}
-        page_range = '1-' + str(doc.pageCount)
+        page_range = '1-' + str(doc.page_count)
 
     p = Path.Path(filename).parents[0]
     n = Path.Path(filename).stem
@@ -289,7 +289,7 @@ def get_widths_each_character(txt, s=12, w='normal'):
 
 def delete_links(page):
     #deletes links with
-    lnks = page.getLinks()
+    lnks = page.get_links()
     for lnk in lnks:
         id=lnk['id']
         print(id)

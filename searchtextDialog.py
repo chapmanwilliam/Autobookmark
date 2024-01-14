@@ -24,11 +24,11 @@ class searchtextDialog():
         pass
 
     def searchForward(self, search, fromPg=0):
-        if fromPg>=self.doc.pageCount:
-            self.searchPg=self.doc.pageCount-1
+        if fromPg>=self.doc.page_count:
+            self.searchPg=self.doc.page_count-1
             return
-        for pg in range(fromPg,self.doc.pageCount):
-            self.display.updatestatusBar("Searching page " + str(pg+1) + " out of " + str(self.doc.pageCount))
+        for pg in range(fromPg,self.doc.page_count):
+            self.display.updatestatusBar("Searching page " + str(pg+1) + " out of " + str(self.doc.page_count))
             if self.highlight(search,pg):
                 self.searchPg=pg
                 self.oldsearchPg=self.searchPg
@@ -40,7 +40,7 @@ class searchtextDialog():
             self.searchPg=0
             return
         for pg in range(fromPg,-1,-1):
-            self.display.updatestatusBar("Searching page " + str(pg+1) + " out of " + str(self.doc.pageCount))
+            self.display.updatestatusBar("Searching page " + str(pg+1) + " out of " + str(self.doc.page_count))
             if self.highlight(search,pg):
                 self.searchPg=pg
                 self.oldsearchPg=self.searchPg
@@ -49,18 +49,18 @@ class searchtextDialog():
 
 
     def clearAll(self):
-        for pg in range(0,self.doc.pageCount):
-            percent=int(float(pg)*100/float(self.doc.pageCount))
+        for pg in range(0,self.doc.page_count):
+            percent=int(float(pg)*100/float(self.doc.page_count))
             if percent % 2==0:
                 self.display.updateprogressBar(percent)
-                self.display.updatestatusBar("Clearing highlights from page " + str(pg+1) + " out of " + str(self.doc.pageCount))
+                self.display.updatestatusBar("Clearing highlights from page " + str(pg+1) + " out of " + str(self.doc.page_count))
             self.clearHighlight(pg)
         self.display.updatestatusBar("Finished clearing highlights.")
         self.display.updateprogressBar(0)
         self.display.refreshallPages()
 
     def clearHighlight(self,pg):
-        if pg<0 or pg>=self.doc.pageCount: return
+        if pg<0 or pg>=self.doc.page_count: return
         page=self.doc[pg]
         for annot in page.annots():
             info = annot.info
@@ -87,11 +87,11 @@ class searchtextDialog():
     def searchAll(self, search):
         count=0
         cur_page=self.display.cur_page
-        for pg in range(0,self.doc.pageCount):
-            percent=int(float(pg)*100/float(self.doc.pageCount))
+        for pg in range(0,self.doc.page_count):
+            percent=int(float(pg)*100/float(self.doc.page_count))
             if percent % 2==0:
                 self.display.updateprogressBar(percent)
-                self.display.updatestatusBar("Searching page " + str(pg+1) + " out of " + str(self.doc.pageCount))
+                self.display.updatestatusBar("Searching page " + str(pg+1) + " out of " + str(self.doc.page_count))
             if self.highlight(search,pg, clear_old=False): count+=1
         self.display.updatestatusBar("Finished searching.")
         self.display.updateprogressBar(0)

@@ -519,7 +519,7 @@ def make_pdf(dlg):
                          bis + 1, max_seiten)
         # insert standard bookmark ahead of any page range
         total_toc.append([1, bm_main_title, aus_nr + 1])
-        toc = doc.getToC(simple=False)  # get file's TOC
+        toc = doc.get_toc(simple=False)  # get file's TOC
         last_lvl = 1  # immunize against hierarchy gaps
         for t in toc:
             lnk_type = t[3]["kind"]  # if "goto", page must be in range
@@ -543,7 +543,7 @@ def make_pdf(dlg):
     # all input files processed
     # ==============================================================================
     if total_toc:
-        pdf_out.setToC(total_toc)
+        pdf_out.set_toc(total_toc)
     pdf_out.save(ausgabe)
     pdf_out.close()
     return ausgabe

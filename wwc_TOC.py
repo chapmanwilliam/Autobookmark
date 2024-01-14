@@ -3,7 +3,7 @@ import fitz
 
 def max_depth(doc):
     # returns max-depth of bookmarks
-    toc = doc.getToC()
+    toc = doc.get_toc()
     max_depth = 0
     for t in toc:
         level = t[0]
@@ -12,7 +12,7 @@ def max_depth(doc):
 
 def isTOC(doc, display=None):
     #returns true if there is TOC (i.e. page labels with TOC)
-    for pg in range(0,doc.pageCount):
+    for pg in range(0,doc.page_count):
         page=doc[pg]
         if isTOCPage(page): return True
     return False
@@ -43,7 +43,7 @@ def delete_toc(doc, options=None, display=None, addHistory=True):
         stPage = 0
         enPage = 0
         flag = False
-        for i in range(0, doc.pageCount):
+        for i in range(0, doc.page_count):
             page = doc[i]
             if isTOCPage(page):
                 flag = True
@@ -121,7 +121,7 @@ def write_toc(doc, options, display=None, addHistory=True):
 
     if isTOC(doc): delete_toc(doc,options, display,addHistory=False)
 
-    toc = doc.getToC()
+    toc = doc.get_toc()
 
     total = len(toc)
 
@@ -197,7 +197,7 @@ def write_toc(doc, options, display=None, addHistory=True):
     _add_toc_label(new_doc)
     display.insertPages(new_doc,0)
     for l in lnks:
-        l['link']['page']+=new_doc.pageCount
+        l['link']['page']+=new_doc.page_count
         doc[l['pgNo']].insertLink(l['link'])
     new_doc.close()
     display.readTree()

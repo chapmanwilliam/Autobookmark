@@ -221,17 +221,20 @@ class display():
 
     def reset(self):
         openFiles[self.id] = {'filepath': self.filepath, 'class': self}
-        if self.doc:
-            self.doc.add_default_label()
-            self.dlist_tab = [None] * self.doc.pageCount
-            self.configButtons()
-            self.vbar.config(to=self.doc.pageCount)
-            self.fillTree()
-            self.displayWindow.title(os.path.basename(self.filepath))
-            self.setPage()
-        else:
-            self.cur_page = 0
-            self.vbar.config(to=1)
+        try:
+            if self.doc:
+                self.doc.add_default_label()
+                self.dlist_tab = [None] * self.doc.page_count
+                self.configButtons()
+                self.vbar.config(to=self.doc.page_count)
+                self.fillTree()
+                self.displayWindow.title(os.path.basename(self.filepath))
+                self.setPage()
+            else:
+                self.cur_page = 0
+                self.vbar.config(to=1)
+        except:
+            print('Error opening')
 
 
     #file functions
@@ -344,7 +347,7 @@ class display():
             self.displayWindow.destroy()
 
     def refreshallPages(self):
-        self.dlist_tab = [None] * self.doc.pageCount
+        self.dlist_tab = [None] * self.doc.page_count
         self.displayPage()
 
     def refreshPage(self, pg=None):
@@ -390,7 +393,7 @@ class display():
             if index+1<len(Lbs):
                 return Lbs[index+1]['startpage']
             else:
-                return doc.pageCount
+                return doc.page_count
 
         def getnewPgLabels(pagesPDF):
             newLbs=pagesPDF.get_labels_rule_dict()
@@ -398,13 +401,13 @@ class display():
             for lb in newLbs: lb['startpage']+=pg
             oldLbs=self.doc.get_labels_rule_dict()
             split_lb=which_label_have_we_split(self.doc)
-            for i in range(split_lb+1, len(oldLbs)): oldLbs[i]['startpage']+=pagesPDF.pageCount
+            for i in range(split_lb+1, len(oldLbs)): oldLbs[i]['startpage']+=pagesPDF.page_count
             if split_lb>-1:
                 end_pg=getendpageLb(self.doc,split_lb)
                 pgs_left_in_split_lb=end_pg-pg
                 if pgs_left_in_split_lb>0:
                     new_lb=oldLbs[split_lb]
-                    new_lb['startpage']=end_pg+pagesPDF.pageCount
+                    new_lb['startpage']=end_pg+pagesPDF.page_count
                     oldLbs.append(new_lb)
 
             newLbs.extend(oldLbs)
@@ -431,14 +434,14 @@ class display():
         newLbs=getnewPgLabels(pagesPDF)
         self.doc.insertPDF(docsrc=pagesPDF,start_at=pg)
         self.doc.set_page_labels(newLbs)
-        adjustTOC(pg,pagesPDF.pageCount)
+        adjustTOC(pg,pagesPDF.page_count)
 
-        for i in range(0,pagesPDF.pageCount): self.dlist_tab.insert(pg,None)
+        for i in range(0,pagesPDF.page_count): self.dlist_tab.insert(pg,None)
 
-        if self.cur_page >= self.doc.pageCount: self.cur_page = self.doc.pageCount - 1
-        self.vbar.config(to=self.doc.pageCount)
+        if self.cur_page >= self.doc.page_count: self.cur_page = self.doc.page_count - 1
+        self.vbar.config(to=self.doc.page_count)
 
-        self.pgCountTxt.set("/ " + str(self.doc.pageCount))
+        self.pgCountTxt.set("/ " + str(self.doc.page_count))
 
         self.displayPage()
 
@@ -448,7 +451,7 @@ class display():
 
     def rotate(self, degrees, pgRange=None, addHistory=True):
         if self.doc:
-            if not pgRange: pgRange=str(self.doc[0].get_label())+ "-" + str(self.doc[self.doc.pageCount-1].get_label())
+            if not pgRange: pgRange=str(self.doc[0].get_label())+ "-" + str(self.doc[self.doc.page_count-1].get_label())
             a= self.doc.parse_page_string(pgRange)
             if a:
                 for pgNo in a:
@@ -484,7 +487,7 @@ class display():
                         search_tree(child_node)
             search_tree("")
 
-        if deletePgNo>=0 and deletePgNo<self.doc.pageCount:
+        if deletePgNo>=0 and deletePgNo<self.doc.page_count:
             deletedPagePdf=fitz.open()
             deletedPagePdf.insertPDF(self.doc,from_page=deletePgNo, to_page=deletePgNo)
             self.doc.deletePage(deletePgNo)
@@ -493,10 +496,10 @@ class display():
             self.dlist_tab.pop(deletePgNo)
             if addHistory: self.adddocHistory({'code':"DOC_pageDeleted", "page": deletedPagePdf, 'pgNo': deletePgNo})
 
-        if self.cur_page >= self.doc.pageCount: self.cur_page = self.doc.pageCount - 1
-        self.vbar.config(to=self.doc.pageCount)
+        if self.cur_page >= self.doc.page_count: self.cur_page = self.doc.page_count - 1
+        self.vbar.config(to=self.doc.page_count)
 
-        self.pgCountTxt.set("/ " + str(self.doc.pageCount))
+        self.pgCountTxt.set("/ " + str(self.doc.page_count))
 
         self.displayPage()
 
@@ -521,7 +524,7 @@ class display():
             return
         pgTxt=str(self.cur_page+1)
         pgLblTxt=self.doc[self.cur_page].get_label()
-        self.pgCountTxt.set("/ " + str(self.doc.pageCount))
+        self.pgCountTxt.set("/ " + str(self.doc.page_count))
         self.pgEntry.delete(0,tk.END)
         self.pgEntry.insert(0,pgTxt)
         self.pgLabelEntry.delete(0,tk.END)
@@ -539,7 +542,7 @@ class display():
     def pgStrChanged(self, event):
         str=self.pgEntry.get()
         if str.isnumeric():
-            if int(str)>=0 and int(str)<=self.doc.pageCount:
+            if int(str)>=0 and int(str)<=self.doc.page_count:
                 self.cur_page=int(str)-1
                 self.addpageHistory(self.cur_page)
         self.setPage()
@@ -549,7 +552,7 @@ class display():
         """
         dlist = self.dlist_tab[pno]  # get display list of page number
         if not dlist:  # create if not yet there
-            self.dlist_tab[pno] = self.doc[pno].getDisplayList()
+            self.dlist_tab[pno] = self.doc[pno].get_displaylist()
             dlist = self.dlist_tab[pno]
         r = dlist.rect  # the page rectangle
         if not clip: clip = r
@@ -566,7 +569,7 @@ class display():
         mat_0 = fitz.Matrix(zoom_0, zoom_0)
 
         if not zoom:  # show total page
-            pix = dlist.getPixmap(matrix=mat_0, alpha=False)
+            pix = dlist.get_pixmap(matrix=mat_0, alpha=False)
         else:
 #            mp = r.tl + (r.br - r.tl) * 0.5  # page rect center
 #            w2 = r.width / 2
@@ -582,7 +585,7 @@ class display():
 #            clip = fitz.Rect(tl, tl.x + w2, tl.y + h2)
 
             mat = mat_0 * fitz.Matrix(2, 2)  # zoom matrix
-            pix = dlist.getPixmap(alpha=False, matrix=mat, clip=clip)
+            pix = dlist.get_pixmap(alpha=False, matrix=mat, clip=clip)
 
 #        if first:  # first call: tkinter still inactive
 #            img = pix.getPNGData()  # so use fitz png output
@@ -591,7 +594,7 @@ class display():
 #            img = ImageTk.PhotoImage(pilimg)
 
         pix1 = fitz.Pixmap(pix, 0) if pix.alpha else pix
-        imgdata = pix1.getImageData('ppm')
+        imgdata = pix1.tobytes('ppm')
         tkimg = tk.PhotoImage(data=imgdata)
 
         self.width=pix1.width
@@ -641,7 +644,7 @@ class display():
     def link_clicked(self,point):
         if not self.doc: return None
         page=self.doc[self.cur_page]
-        lnks = page.getLinks()
+        lnks = page.get_links()
         for lnk in lnks:
             if self.pointInRect(point, self.convertpageRect(lnk['from'])):
                 self.action_link(lnk)
@@ -746,7 +749,7 @@ class display():
                 self.tree.glueNodes(self.tree.gluedNodes)
                 self.readTree()
             if options['code']=="TOC_sorted":
-                self.doc.setToC(options['old_toc'])
+                self.doc.set_toc(options['old_toc'])
                 self.fillTree()
             if options['code']=="TOC_changeddestination":
                 for s in options['selectedList']:
@@ -870,7 +873,7 @@ class display():
                 self.tree.glueNodes(self.tree.gluedNodes)
                 self.readTree()
             if options['code']=="TOC_sorted":
-                self.doc.setToC(options['new_toc'])
+                self.doc.set_toc(options['new_toc'])
                 self.fillTree()
             if options['code']=="TOC_changeddestination":
                 for s in options['selectedList']:
@@ -943,14 +946,14 @@ class display():
         if not self.doc: return
         self.cur_page -=1
         if self.cur_page<0:
-            self.cur_page=self.doc.pageCount-1
+            self.cur_page=self.doc.page_count-1
         self.addpageHistory(self.cur_page)
         self.setPage()
 
     def incPg(self):
         if not self.doc: return
         self.cur_page +=1
-        if self.cur_page>=self.doc.pageCount:
+        if self.cur_page>=self.doc.page_count:
             self.cur_page=0
         self.addpageHistory(self.cur_page)
         self.setPage()
@@ -965,7 +968,7 @@ class display():
     def golastPage(self):
         print('go last page')
         if not self.doc: return
-        self.cur_page=self.doc.pageCount-1
+        self.cur_page=self.doc.page_count-1
         self.addpageHistory(self.cur_page)
         self.setPage()
 
@@ -1441,9 +1444,9 @@ class display():
 
         search_tree({}, 1)
         if self.doc:
-            self.doc.setToC(nTOC)  # replace table of contents
+            self.doc.set_toc(nTOC)  # replace table of contents
             #update those items that have a colour or a style
-            toc=self.doc.getToC(simple=False)
+            toc=self.doc.get_toc(simple=False)
             for col in colours:
                 d=toc[col['index']][3]
                 d['color']=col['colour']

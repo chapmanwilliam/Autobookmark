@@ -6,7 +6,7 @@ def orderPages(doc, display=None):
     #order pages in the order of the bookmarks
     if display: display.updatestatusBar('Ordering pages...')
     BkMks=fillBkMks(doc)
-    sortRoutines(BkMks,doc.pageCount)
+    sortRoutines(BkMks,doc.page_count)
     MoveThePages(BkMks,doc)
     refillBkMks(BkMks,doc)
     if display: display.updatestatusBar('Ordered pages')
@@ -17,12 +17,12 @@ def refillBkMks(BkMks,doc):
         newTOC=BkMk['BkMk']
         newTOC[2]=BkMk['pg']+1
         newTOCs.append(newTOC)
-    doc.setToC(newTOCs)
+    doc.set_toc(newTOCs)
 
 def fillBkMks(doc):
     #Fill array of bookmarks, noting the order in which they appear and the pages to which they point
     BkMks=[]
-    TOC = doc.getToC(simple=False)
+    TOC = doc.get_toc(simple=False)
     count=0
     for t in TOC:
         dict=t[-1]

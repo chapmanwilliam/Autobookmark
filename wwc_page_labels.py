@@ -7,7 +7,7 @@ from collections import OrderedDict
 #READING:
 # --- getpgLabelMapping(doc) returns tuple:
 #    dict - an ordered dictionary of page labels. For each page label there is a tuple of associated page numbers
-#    arr_labels - a list page labels (integers) from 0 to doc.pageCount-1. arr_labels[pgNo] returns the page label associated with pgNo
+#    arr_labels - a list page labels (integers) from 0 to doc.page_count-1. arr_labels[pgNo] returns the page label associated with pgNo
 #WRITING
 # --- update_catalog_nums(doc, labels)
 # labels is a list. Each element is  {'startpage': '0', 'prefix': '', 'style': 'D', 'firstpagenum': '1'}
@@ -74,8 +74,8 @@ def get_labels_from_doc(doc):
 
 def get_catalog(doc):
     #returns the catalog
-    root_xref = doc.PDFCatalog()  # get xref of the /Catalog
-    return doc.xrefObject(root_xref, compressed=True)  # return object definition
+    root_xref = doc.pdf_catalog()  # get xref of the /Catalog
+    return doc.xref_object(root_xref, compressed=True)  # return object definition
 
 def getrelevantPartCatalog(cat, doc):
     #returns the part of the string relevant to catalog
@@ -180,7 +180,7 @@ def parse_flags(str):
 
 def set_labels(doc, labels):
 
-    arr_labels = [None] * doc.pageCount   # for each page, what is the page label
+    arr_labels = [None] * doc.page_count   # for each page, what is the page label
     dict = OrderedDict()   # for each pagelabel, there is a tuple of associated pages
     if len(labels) > 0:
         for i in range(0, len(labels)):
@@ -189,7 +189,7 @@ def set_labels(doc, labels):
                 l2 = labels[i + 1]
                 end_page = l2['startpage']
             else:
-                end_page = doc.pageCount
+                end_page = doc.page_count
             i = 0
             for c in range(l1['startpage'], end_page):
                 lab = construct_label(l1['style'], l1['prefix'], l1['firstpagenum'] + i)

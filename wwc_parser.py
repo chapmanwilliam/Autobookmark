@@ -35,6 +35,7 @@ import datetime
 import string
 import time
 import collections
+collections.Callable = collections.abc.Callable
 import re
 from io import StringIO
 from calendar import monthrange, isleap

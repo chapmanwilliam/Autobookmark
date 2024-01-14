@@ -12,7 +12,8 @@ from typing import Dict
 import fitz  # pip install pymupdf
 import unidecode
 import wwc_parser as dparser
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
+from PyPDF2.generic import AnnotationBuilder
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams, LTTextBox, LTChar
 from pdfminer.pdfdocument import PDFDocument
@@ -178,8 +179,8 @@ def get_toc(filepath: str) -> Dict[int, str]:
     old_level = 1
     count = 0
     with fitz.open(filepath) as doc:
-        set_NO_PAGES(doc.pageCount)
-        t = doc.getToC()
+        set_NO_PAGES(doc.page_count)
+        t = doc.get_toc()
         for level, title, pageno in t:
             count += 1
             BkMk = TOCObject(level, title, pageno, pageno)
@@ -213,7 +214,7 @@ def get_labels_each_page(f, f_name):
     return
     print("Getting labels for each page...")
     '''doc=slate.PDF(f)'''
-    p = PdfFileReader(f)
+    p = PdfReader(f)
     a = get_toc(f_name)
     # print(a)
     pages = []
@@ -1082,7 +1083,7 @@ def do_instructions_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("Instructions: ", pg)
     txt = "Instructions"
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1126,7 +1127,7 @@ def do_witness_statement_this_page(page, input, output, Lts):
                 break
 
     txt = "w/s" + name
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1147,7 +1148,7 @@ def do_file_note_this_page(page, input, output, Lts):
                 Dt_txt = D.Dt_txt
 
     txt = "File Note" + Dt_txt
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1169,7 +1170,7 @@ def do_conference_note_this_page(page, input, output, Lts):
                 Dt_txt = D.Dt_txt
 
     txt = "Conference Note" + Dt_txt
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1178,7 +1179,7 @@ def do_index_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("Index: ", pg)
     txt = "Index"
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1193,7 +1194,7 @@ def do_claim_form_this_page(page, input, output, Lts):
         Dt = n_chunk.Dt
         Dt_txt = n_chunk.Dt_txt
     txt = "Claim Form" + Dt_txt
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1208,7 +1209,7 @@ def do_notice_of_funding_this_page(page, input, output, Lts):
         Dt = n_chunk.Dt
         Dt_txt = n_chunk.Dt_txt
     txt = "Notice of Funding, " + Dt_txt
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1217,7 +1218,7 @@ def do_poc_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("POC: ", pg)
     txt = "Particulars of Claim"
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1226,7 +1227,7 @@ def do_schedule_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("Schedule: ", pg)
     txt = "Schedule"
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1235,7 +1236,7 @@ def do_D_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("D: ", pg)
     txt = "Defence"
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1244,7 +1245,7 @@ def do_DQ_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("DQ: ", pg)
     txt = "DQ"
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1253,7 +1254,7 @@ def do_LIST_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("LIST: ", pg)
     txt = "List"
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1,parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1265,7 +1266,7 @@ def do_NTD_this_page(page, input, output, Lts):
     Dt = n_chunk.Dt
     Dt_txt = n_chunk.Dt_txt
     txt = "Notice of Trial Date, " + Dt_txt
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1277,7 +1278,7 @@ def do_NAC_this_page(page, input, output, Lts):
     Dt = n_chunk.Dt
     Dt_txt = n_chunk.Dt_txt
     txt = "Notice of Allocation, " + Dt_txt
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1286,7 +1287,7 @@ def do_CNF_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("CNF: ", pg)
     txt = "CNF, "
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1295,7 +1296,7 @@ def do_offer_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("Offer: ", pg)
     txt = "Offer, "
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1304,7 +1305,7 @@ def do_order_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("Order: ", pg)
     txt = "Order, "
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1319,7 +1320,7 @@ def do_CRU_this_page(page, input, output, Lts):
         Dt = n_chunk.Dt
         Dt_txt = n_chunk.Dt_txt
     txt = "CRU, " + Dt_txt
-    output.addBookmark(txt, pg[0] - 1, parent=None)  # add bookmark
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
     return txt, pg[0]-1
 
 
@@ -1426,8 +1427,8 @@ def paste_dates(output, Dts, date_parent=None):
         if Dt.Dt:
             y = Dt.Dt.year
             if (old_y != y):
-                parent = output.addBookmark(str(y), Dt.pg, date_parent)
-            output.addBookmark(Dt.txt, Dt.pg, parent)
+                parent = output.add_outline_item(str(y), Dt.pg, date_parent)
+            output.add_outline_item(Dt.txt, Dt.pg, parent)
             if Dt.chunk:
                 output.addLink(
                     Dt.pg, Dt.pg, Dt.chunk.size_chunk, border=[10, 1, 1])  # add a link
@@ -1440,14 +1441,19 @@ def paste_letters(output, Lts, toc, doc, letter_parent=None):
     for Lt in Lts:
         if re.search("Email", Lt.txt):
             if old_email != Lt.txt:
-                output.addBookmark(Lt.txt, Lt.pg, letter_parent)
+                output.add_outline_item(Lt.txt, Lt.pg, letter_parent)
                 toc.append([2,Lt.txt,Lt.pg+1])
         else:
-            output.addBookmark(Lt.txt, Lt.pg, letter_parent)
+            output.add_outline_item(Lt.txt, Lt.pg, letter_parent)
             toc.append([2, Lt.txt, Lt.pg+1])
         if Lt.chunk:
-            output.addLink(
-                Lt.pg, Lt.pg, Lt.chunk.size_chunk, border=[1, 10, 1])  # add a link
+            # Add the line
+            annotation = AnnotationBuilder.link(
+                rect=Lt.chunk.size_chunk,
+                target_page_index=Lt.pg,
+            )
+            output.add_annotation(
+                Lt.pg, annotation=annotation)  # add a link
 #            print(Lt.chunk.size_chunk)
 #            p1=fitz.Point(Lt.chunk.size_chunk[0],Lt.chunk.size_chunk[1])
 #            p2=fitz.Point(Lt.chunk.size_chunk[2],Lt.chunk.size_chunk[1])
@@ -1462,7 +1468,7 @@ def paste_key_words(output, Ks, key_words_parent=None):
             txt = k['keyword'] + k['Dt_txt']
         else:
             txt = k['keyword']
-        output.addBookmark(txt, k['pg'], key_words_parent)
+        output.add_outline_item(txt, k['pg'], key_words_parent)
         if k['chunk']:
             output.addLink(
                 k['pg'], k['pg'], k['chunk'].size_chunk, border=[1, 10, 1])  # add a link
@@ -1487,11 +1493,11 @@ def do(f_name, doc, display=None):
         pages = get_text_each_page(fn, display)
         if display:
             display.updatestatusBar('Creating bookmarks...')
-        from PyPDF2 import PdfFileWriter, PdfFileReader
+        from PyPDF2 import PdfWriter, PdfReader
 
-        output = PdfFileWriter()  # open output
-        input = PdfFileReader(fn)  # open input
-        output.setPageMode("/UseOutlines")
+        output = PdfWriter()  # open output
+        input = PdfReader(fn)  # open input
+        output.page_mode="/UseOutlines"
 
         running = True
         licycle = cycle(pages)
@@ -1509,14 +1515,14 @@ def do(f_name, doc, display=None):
             page, nextpage = nextpage, next(licycle)
             pg, size_page, chunks, BOW = page
 
-            p = input.getPage(pg[0] - 1)
+            p = input.pages[pg[0] - 1]
 
             print("No chunks: %d" % len(chunks))
             percentComplete = (float(count) / float(total)) * 100
             if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
 
             if True:
-                output.addPage(p)  # insert page
+                output.add_page(p)  # insert page
                 # if p.getContents():
                 #	print p.getContents()['/Filter']
                 # else:
@@ -1524,19 +1530,19 @@ def do(f_name, doc, display=None):
 
                 # add bookmark for dates
                 if count == 1:
-                    # blank_parent = output.addBookmark("Blanks", 0, parent=None)  # add bookmark
-                    # date_parent = output.addBookmark("Dates", 0, parent=None)  # add bookmark
-                    letter_parent = output.addBookmark(
+                    # blank_parent = output.add_outline_item("Blanks", 0, parent=None)  # add bookmark
+                    # date_parent = output.add_outline_item("Dates", 0, parent=None)  # add bookmark
+                    letter_parent = output.add_outline_item(
                         "Correspondence", 0, parent=None)  # add bookmark
                     if len(KEY_WORDS) > 0:
-                        key_words_parent = output.addBookmark(
+                        key_words_parent = output.add_outline_item(
                             "Key words", 0, parent=None)  # add bookmark
 
                 # date_scrape(page, input, output, Dts, date_parent)
 
                 if len(chunks) < 5:
                     no_blank_pages += 1
-                    # output.addBookmark("Blank page", pg[0] - 1, blank_parent)
+                    # output.add_outline_item("Blank page", pg[0] - 1, blank_parent)
                     blank_pages.append(pg[0] - 1)
 
                 cat_page = categorise_page(page)
@@ -1611,7 +1617,7 @@ def do(f_name, doc, display=None):
         add_dates_from_correspondence_to_key_words(key_words_list, Lts, Dts)
         key_words_list.sort(key=sort_key_words)
         # paste_dates(output, Dts, date_parent)
-        existingTOC=doc.getToC(simple=False)
+        existingTOC=doc.get_toc(simple=False)
         if len(Lts)>0:
             initialPage=Lts[0][2]+1
             entry=[1,"Correspondence",initialPage]
@@ -1628,7 +1634,7 @@ def do(f_name, doc, display=None):
             existingTOC.append([o[0],o[1],o[2]])
 
         print (existingTOC)
-        doc.setToC(existingTOC)
+        doc.set_toc(existingTOC)
         doc.saveIncr()
 
 #        OUT_FILE = fn.name.replace(".pdf", "_.pdf")
@@ -1642,13 +1648,13 @@ def do(f_name, doc, display=None):
 
 def copyTOC(ftree, output):
     # Write bookmarks for children of this node
-    print (output.getNumPages())
+    print (len(output.pages))
     def WriteChildren(CurrentNode, CurrentBookMark):
         if (CurrentNode.identifier != 0):  # i.e. skip root
             BkMkData = CurrentNode.data
             print(BkMkData.title, BkMkData.pageno)
             try:
-                CurrentBookMark = output.addBookmark(title=BkMkData.title, pagenum=BkMkData.pageno, parent=CurrentBookMark)
+                CurrentBookMark = output.add_outline_item(title=BkMkData.title, pagenum=BkMkData.pageno, parent=CurrentBookMark)
             except Exception as e:
                 print(f"Error {e}")
                 pass

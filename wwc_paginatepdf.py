@@ -46,7 +46,7 @@ def paginate(doc, options, display=None, addHistory=True):
     if options['pgRange']:
         pgRange=options['pgRange']
     else:
-        pgRange=doc[0].get_label() + "-" + doc[doc.pageCount-1].get_label()
+        pgRange=doc[0].get_label() + "-" + doc[doc.page_count-1].get_label()
 
     fontn = 'helv'
     if options['fontName'] == "Helvetica": fontn = 'helv'
@@ -122,7 +122,7 @@ def remove_pagination(doc, options, display=None, addHistory=True):
     if options['pgRange']:
         pgRange = options['pgRange']
     else:
-        pgRange = doc[0].get_label() + "-" + doc[doc.pageCount - 1].get_label()
+        pgRange = doc[0].get_label() + "-" + doc[doc.page_count - 1].get_label()
 
     a = doc.parse_page_string(pgRange)
     count = 0

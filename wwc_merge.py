@@ -69,7 +69,7 @@ class mergeDialog(tk.Toplevel):
             doc=fitz.open(filepath)
             pageRange='All pages'
             size=str(int(float(os.path.getsize(filepath))/1000)) + " kb"
-            noPages=doc.pageCount
+            noPages=doc.page_count
             bookmark=self.processbookmarkname(filepath)
             id=self.tMerge.insert('', 'end', text=os.path.basename(filepath), values=(pageRange, size, noPages, bookmark))
             self.listFilePaths[id]={'filepath':filepath, 'bookmark': bookmark, 'pageRange': pageRange}
@@ -147,7 +147,7 @@ def make_pdf(filePaths):
         # also correct any inconsistent input
         # ==============================================================================
         von = 0  # first PDF page number
-        bis = doc.pageCount-1  # last PDF page number
+        bis = doc.page_count-1  # last PDF page number
 
         von = min(max(0, von), max_seiten - 1)  # "from" must be in range
         bis = min(max(0, bis), max_seiten - 1)  # "to" must be in range
@@ -167,7 +167,7 @@ def make_pdf(filePaths):
         bm_main_title = filePaths[k]['bookmark']
         # insert standard bookmark ahead of any page range
         total_toc.append([1, bm_main_title, aus_nr + 1])
-        toc = doc.getToC(simple=False)  # get file's TOC
+        toc = doc.get_toc(simple=False)  # get file's TOC
         last_lvl = 1  # immunize against hierarchy gaps
         for t in toc:
             lnk_type = t[3]["kind"]  # if "goto", page must be in range
@@ -191,7 +191,7 @@ def make_pdf(filePaths):
     # all input files processed
     # ==============================================================================
     if total_toc:
-        pdf_out.setToC(total_toc)
+        pdf_out.set_toc(total_toc)
     defaultpath = os.path.expanduser('~')
     filepath=saveAs(pdf_out, defaultpath)
     pdf_out.close()
