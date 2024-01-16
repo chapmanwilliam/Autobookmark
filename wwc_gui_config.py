@@ -32,40 +32,43 @@ fitz.Page.getWord = getWord  # added WWC 23/1/21
 fitz.Page.selectWord = selectWord  # added WWC 23/1/21
 fitz.Page.gettextselectedHighlights = gettextselectedHighlights  # added WWC 23/1/21
 
-def getLocalResourcePath():
-    if 'win32' in sys.platform:
-        return os.path.abspath(os.curdir) + "\\Resources\\"
-    elif 'darwin':
-        return os.path.abspath(os.curdir) + "/Resources/"
+def findResourcePath(f):
+    if getattr(sys, 'frozen', False):
+        # The application is frozen
+        datadir = os.path.dirname(sys.executable)
     else:
-        raise RuntimeError("Unsupported operating system")
+        # The application is not frozen
+        # Change this bit to match where you store your data files:
+        datadir = os.path.dirname("Resources")
+    return os.path.join(datadir, "Resources",f)
 
-print(getLocalResourcePath())
 
-favicon_location = getLocalResourcePath()+"favicon.ico"
-enter_location = getLocalResourcePath()+"enter.png"
-book_location = getLocalResourcePath()+"book.png"
-bookmark_location = getLocalResourcePath()+"bookmark.png"
-table_location = getLocalResourcePath()+"table.png"
-link_location = getLocalResourcePath()+"link.png"
-asterisk_location = getLocalResourcePath()+"settings.png"
-tree_location = getLocalResourcePath()+"pinetree"
-close_location = getLocalResourcePath()+"close.png"
-open_location = getLocalResourcePath()+"open.png"
-save_location = getLocalResourcePath()+"save.png"
-order_location = getLocalResourcePath()+"md-reload.png"
-left_location = getLocalResourcePath()+"arrow-1-left.png"
-right_location = getLocalResourcePath()+"arrow-1-right.png"
-search_location = getLocalResourcePath()+"search.png"
-print_location = getLocalResourcePath()+"print.png"
-target_location = getLocalResourcePath()+"target.png"
-delete_location = getLocalResourcePath()+"delete.png"
-bookmark_tab_location = getLocalResourcePath()+"bookmark-alt.png"
-documents_location = getLocalResourcePath()+"documents.png"
-chrono_location = getLocalResourcePath()+"time.png"
-anticlockwise_location = getLocalResourcePath()+"anticlockwise.png"
-clockwise_location = getLocalResourcePath()+"clockwise.png"
-settings_location = getLocalResourcePath()+"pyutilsettings.db"
+print(findResourcePath("open.png"))
+
+favicon_location = findResourcePath("favicon.ico")
+enter_location = findResourcePath("enter.png")
+book_location = findResourcePath("book.png")
+bookmark_location = findResourcePath("bookmark.png")
+table_location = findResourcePath("table.png")
+link_location = findResourcePath("link.png")
+asterisk_location = findResourcePath("settings.png")
+tree_location = findResourcePath("pinetree")
+close_location = findResourcePath("close.png")
+open_location = findResourcePath("open.png")
+save_location = findResourcePath("save.png")
+order_location = findResourcePath("md-reload.png")
+left_location = findResourcePath("arrow-1-left.png")
+right_location = findResourcePath("arrow-1-right.png")
+search_location = findResourcePath("search.png")
+print_location = findResourcePath("print.png")
+target_location = findResourcePath("target.png")
+delete_location = findResourcePath("delete.png")
+bookmark_tab_location = findResourcePath("bookmark-alt.png")
+documents_location = findResourcePath("documents.png")
+chrono_location = findResourcePath("time.png")
+anticlockwise_location = findResourcePath("anticlockwise.png")
+clockwise_location = findResourcePath("clockwise.png")
+settings_location = findResourcePath("pyutilsettings.db")
 
 
 class CreateToolTip(object):
