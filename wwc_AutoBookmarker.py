@@ -1715,3 +1715,17 @@ sys.setrecursionlimit(10000)
 def print_errors():
     global error_list
     print(error_list)
+
+
+def externalDrop(data):
+    print("Data dropped:", data)
+    global percentComplete
+
+    fs = data.split("}")  # split by ;
+    print (fs)
+    for f in fs:
+        f = f.replace('{', "").strip()
+        print (f)
+        if f != "":
+            percentComplete = 0
+            do(f,fitz.open(f))
