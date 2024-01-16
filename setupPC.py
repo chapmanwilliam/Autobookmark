@@ -18,7 +18,7 @@ import sys
 base = 'Win32GUI' if sys.platform=='win32' else None
 
 executables = [
-    Executable('Display.py', base=base, target_name = 'Autobookmarker')
+    Executable('Display.py', base=base, target_name = 'Autobookmarker', icon='Resources/logo.ico')
 ]
 
 setup(name='Autobookmark',

@@ -7,7 +7,7 @@ build_options = {'packages': [], 'excludes': [], 'include_files': ['Resources/']
 base = 'gui'
 
 executables = [
-    Executable('Display.py', base=base, target_name = 'Autobookmark')
+    Executable('Display.py', base=base, target_name = 'Autobookmark', icon='Resources/logo.ico')
 ]
 
 setup(name='Autobookmark',
