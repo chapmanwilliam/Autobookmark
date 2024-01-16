@@ -1,4 +1,4 @@
 # Project exclude paths
 /venv/
 /build/
-/setup.py
+/setupMac.py
