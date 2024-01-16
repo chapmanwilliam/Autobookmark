@@ -4,6 +4,16 @@ from cx_Freeze import setup, Executable
 # fine tuning.
 build_options = {'packages': [], 'excludes': [], 'include_files': ['Resources/']}
 
+for dbmodule in ['dbhash', 'gdbm', 'dbm', 'dumbdbm']:
+    try:
+        __import__(dbmodule)
+    except ImportError:
+        pass
+    else:
+        # If we found the module, ensure it's copied to the build directory.
+        build_options['packages'].append(dbmodule)
+
+
 import sys
 base = 'Win32GUI' if sys.platform=='win32' else None
 
