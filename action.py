@@ -14,10 +14,9 @@ def wait_some_time(queue_to_gui, queue_from_gui, file_path_list):
         if len(file) > 10:
             file = file[:10] + '...'
         queue_to_gui.put('Continuing ...\n{f}'.format(f=file), False)
-        externalDrop(file_path,queue_to_gui)
+        externalDrop(file_path,queue_to_gui, queue_from_gui)
         if not queue_from_gui.empty():
-            if queue_from_gui.get() == u'Cancel':
-                return
+            if queue_from_gui.get() == u'Cancel': return
 
     queue_to_gui.put('100', False)
     time.sleep(0.5)

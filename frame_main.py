@@ -164,12 +164,10 @@ class FrameMain(frame_main_gui.FrameMain):
                 # Store queue content in variable since reading an item from the queue also removes it from the queue.
                 current_message = self.queue_gui_to_function.get()
                 #note: message is always a string
-                print("Current message: ", current_message)
 
                 # Exit this loop as soon as a 'Finish', 'Cancel' or 'Error' message is found in queue.
                 # Otherwise adjust the percentage value of the gauge or replace the text above it.
                 if current_message == u'Finish':
-                    print('Finish')
                     break
                 elif current_message.isdigit():
                     # Convention: If the value in the queue is a digit set the gauge to that value.

@@ -233,7 +233,7 @@ def get_labels_each_page(f, f_name):
     return pages
 
 
-def get_text_each_page(fn, display=None, queue_to_gui=None):
+def get_text_each_page(fn, display=None, queue_to_gui=None, queue_from_gui=None):
     print("Getting text chunks each page...")
     if display: display.updatestatusBar("Getting text for each page....")
     if queue_to_gui: queue_to_gui.put_nowait('Getting pages....')
@@ -251,9 +251,9 @@ def get_text_each_page(fn, display=None, queue_to_gui=None):
             print('Page no %d out of %d' % (page.pageid, NO_PAGES))
             percentComplete = (float(page.pageid) / float(NO_PAGES)) * 100
             if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
-            if int(percentComplete) % 2 == 0 and queue_to_gui:
-                print('doing it for getting text')
-                queue_to_gui.put_nowait(str(int(percentComplete)))
+            if int(percentComplete) % 2 == 0 and queue_to_gui: queue_to_gui.put_nowait(str(int(percentComplete)))
+            if not queue_from_gui.empty():
+                if queue_from_gui.get() == u'Cancel': return None
 
             size = [int(page.width), int(page.height)]
             p = [page.pageid, NO_PAGES]
@@ -1479,7 +1479,7 @@ def paste_key_words(output, Ks, key_words_parent=None):
                 k['pg'], k['pg'], k['chunk'].size_chunk, border=[1, 10, 1])  # add a link
 
 
-def do(f_name, doc, display=None, queue_to_gui=None):
+def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None):
     # app=wx.App(False)
     # frame=wx.Frame(None,wx.ID_ANY,"AutoBookmarker")
     # frame.Show(True)
@@ -1495,10 +1495,11 @@ def do(f_name, doc, display=None, queue_to_gui=None):
     with open(f_name, 'rb') as fn:
         ftree = get_toc(f_name)  # tree
         # get_labels_each_page(fn, f_name)
-        pages = get_text_each_page(fn, display, queue_to_gui)
+        pages = get_text_each_page(fn, display, queue_to_gui,queue_from_gui)
+        if pages is None: return
         if display:
             display.updatestatusBar('Creating bookmarks...')
-        if queue_to_gui:  queue_to_gui.put('Creating bookmarks...')
+        if queue_to_gui:  queue_to_gui.put('Bookmarks...')
         from PyPDF2 import PdfWriter, PdfReader
 
         output = PdfWriter()  # open output
@@ -1522,6 +1523,9 @@ def do(f_name, doc, display=None, queue_to_gui=None):
             pg, size_page, chunks, BOW = page
 
             p = input.pages[pg[0] - 1]
+            if not queue_from_gui.empty():
+                if queue_from_gui.get() == u'Cancel': return None
+
 
             #print("No chunks: %d" % len(chunks))
             percentComplete = (float(count) / float(total)) * 100
@@ -1729,7 +1733,7 @@ def print_errors():
     print(error_list)
 
 
-def externalDrop(data, queue_to_gui=None):
+def externalDrop(data, queue_to_gui=None, queue_from_gui=None):
     print("Data dropped:", data)
     global percentComplete
 
@@ -1740,4 +1744,4 @@ def externalDrop(data, queue_to_gui=None):
         print(f)
         if f != "":
             percentComplete = 0
-            do(f, fitz.open(f), None,queue_to_gui)
+            do(f, fitz.open(f), None,queue_to_gui, queue_from_gui)
