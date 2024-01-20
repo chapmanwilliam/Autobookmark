@@ -35,7 +35,7 @@ class FrameMain(wx.Frame):
 
         PanelSizer.AddSpacer(17)
 
-        self.DropHereStaticText = wx.StaticText(self.DragDropPanel, wx.ID_ANY, _(u"\n\n\nDrop files here"),
+        self.DropHereStaticText = wx.StaticText(self.DragDropPanel, wx.ID_ANY, _(u"\n\n\nDrop files here!"),
                                                 wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTRE)
         self.DropHereStaticText.Wrap(-1)
         self.DropHereStaticText.SetFont(wx.Font(wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString))

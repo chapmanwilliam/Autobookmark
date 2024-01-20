@@ -154,7 +154,7 @@ def e(s):
     return ESC_PAT.sub(lambda m: '&#%d;' % ord(m.group(0)), s)
 
 
-def resolve_dest(dest, doc): #unused
+def resolve_dest(dest, doc):  # unused
     if isinstance(dest, str):
         dest = resolve1(doc.get_dest(dest))
     elif isinstance(dest, PSLiteral):
@@ -233,9 +233,10 @@ def get_labels_each_page(f, f_name):
     return pages
 
 
-def get_text_each_page(fn, display=None):
+def get_text_each_page(fn, display=None, queue_to_gui=None):
     print("Getting text chunks each page...")
     if display: display.updatestatusBar("Getting text for each page....")
+    if queue_to_gui: queue_to_gui.put_nowait('Getting pages....')
     global percentComplete
 
     with PdfMinerWrapper(fn.name) as doc:
@@ -248,8 +249,12 @@ def get_text_each_page(fn, display=None):
         for page in doc:
             chunks_page = []
             print('Page no %d out of %d' % (page.pageid, NO_PAGES))
-            percentComplete = int((float(page.pageid) / NO_PAGES) * 100)
+            percentComplete = (float(page.pageid) / float(NO_PAGES)) * 100
             if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
+            if int(percentComplete) % 2 == 0 and queue_to_gui:
+                print('doing it for getting text')
+                queue_to_gui.put_nowait(str(int(percentComplete)))
+
             size = [int(page.width), int(page.height)]
             p = [page.pageid, NO_PAGES]
             chunks[count].append(p)
@@ -1046,7 +1051,7 @@ def do_email_this_page(page, nextpage, input, output, Lts):
         f_txt = tidy_right_bit_from(get_right_bit(each_fr, chunks))
         print("Chunks with dates: ", get_chunks_with_dates(chunks))
         n_chunk = get_nearest_chunk_within_x_lines(each_fr,
-                                                   get_chunks_with_dates(chunks),8)
+                                                   get_chunks_with_dates(chunks), 8)
         print("Nearest chunk with date: ", n_chunk)
         Dt, date_txt = None, None
         if n_chunk:
@@ -1084,7 +1089,7 @@ def do_instructions_this_page(page, input, output, Lts):
     print("Instructions: ", pg)
     txt = "Instructions"
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_witness_statement_this_page(page, input, output, Lts):
@@ -1128,7 +1133,7 @@ def do_witness_statement_this_page(page, input, output, Lts):
 
     txt = "w/s" + name
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_file_note_this_page(page, input, output, Lts):
@@ -1149,7 +1154,7 @@ def do_file_note_this_page(page, input, output, Lts):
 
     txt = "File Note" + Dt_txt
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_conference_note_this_page(page, input, output, Lts):
@@ -1171,7 +1176,7 @@ def do_conference_note_this_page(page, input, output, Lts):
 
     txt = "Conference Note" + Dt_txt
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_index_this_page(page, input, output, Lts):
@@ -1180,7 +1185,7 @@ def do_index_this_page(page, input, output, Lts):
     print("Index: ", pg)
     txt = "Index"
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_claim_form_this_page(page, input, output, Lts):
@@ -1195,7 +1200,7 @@ def do_claim_form_this_page(page, input, output, Lts):
         Dt_txt = n_chunk.Dt_txt
     txt = "Claim Form" + Dt_txt
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_notice_of_funding_this_page(page, input, output, Lts):
@@ -1210,7 +1215,7 @@ def do_notice_of_funding_this_page(page, input, output, Lts):
         Dt_txt = n_chunk.Dt_txt
     txt = "Notice of Funding, " + Dt_txt
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_poc_this_page(page, input, output, Lts):
@@ -1219,7 +1224,7 @@ def do_poc_this_page(page, input, output, Lts):
     print("POC: ", pg)
     txt = "Particulars of Claim"
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_schedule_this_page(page, input, output, Lts):
@@ -1228,7 +1233,7 @@ def do_schedule_this_page(page, input, output, Lts):
     print("Schedule: ", pg)
     txt = "Schedule"
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_D_this_page(page, input, output, Lts):
@@ -1237,7 +1242,7 @@ def do_D_this_page(page, input, output, Lts):
     print("D: ", pg)
     txt = "Defence"
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_DQ_this_page(page, input, output, Lts):
@@ -1246,7 +1251,7 @@ def do_DQ_this_page(page, input, output, Lts):
     print("DQ: ", pg)
     txt = "DQ"
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_LIST_this_page(page, input, output, Lts):
@@ -1254,8 +1259,8 @@ def do_LIST_this_page(page, input, output, Lts):
     pg, size_page, chunks, BOW = page
     print("LIST: ", pg)
     txt = "List"
-    output.add_outline_item(txt, pg[0] - 1,parent=None)  # add bookmark
-    return txt, pg[0]-1
+    output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
+    return txt, pg[0] - 1
 
 
 def do_NTD_this_page(page, input, output, Lts):
@@ -1267,7 +1272,7 @@ def do_NTD_this_page(page, input, output, Lts):
     Dt_txt = n_chunk.Dt_txt
     txt = "Notice of Trial Date, " + Dt_txt
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_NAC_this_page(page, input, output, Lts):
@@ -1279,7 +1284,7 @@ def do_NAC_this_page(page, input, output, Lts):
     Dt_txt = n_chunk.Dt_txt
     txt = "Notice of Allocation, " + Dt_txt
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_CNF_this_page(page, input, output, Lts):
@@ -1288,7 +1293,7 @@ def do_CNF_this_page(page, input, output, Lts):
     print("CNF: ", pg)
     txt = "CNF, "
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_offer_this_page(page, input, output, Lts):
@@ -1297,7 +1302,7 @@ def do_offer_this_page(page, input, output, Lts):
     print("Offer: ", pg)
     txt = "Offer, "
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_order_this_page(page, input, output, Lts):
@@ -1306,7 +1311,7 @@ def do_order_this_page(page, input, output, Lts):
     print("Order: ", pg)
     txt = "Order, "
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def do_CRU_this_page(page, input, output, Lts):
@@ -1321,7 +1326,7 @@ def do_CRU_this_page(page, input, output, Lts):
         Dt_txt = n_chunk.Dt_txt
     txt = "CRU, " + Dt_txt
     output.add_outline_item(txt, pg[0] - 1, parent=None)  # add bookmark
-    return txt, pg[0]-1
+    return txt, pg[0] - 1
 
 
 def categorise_page(page):
@@ -1442,10 +1447,10 @@ def paste_letters(output, Lts, toc, doc, letter_parent=None):
         if re.search("Email", Lt.txt):
             if old_email != Lt.txt:
                 output.add_outline_item(Lt.txt, Lt.pg, letter_parent)
-                toc.append([2,Lt.txt,Lt.pg+1])
+                toc.append([2, Lt.txt, Lt.pg + 1])
         else:
             output.add_outline_item(Lt.txt, Lt.pg, letter_parent)
-            toc.append([2, Lt.txt, Lt.pg+1])
+            toc.append([2, Lt.txt, Lt.pg + 1])
         if Lt.chunk:
             # Add the line
             annotation = AnnotationBuilder.link(
@@ -1454,10 +1459,10 @@ def paste_letters(output, Lts, toc, doc, letter_parent=None):
             )
             output.add_annotation(
                 Lt.pg, annotation=annotation)  # add a link
-#            print(Lt.chunk.size_chunk)
-#            p1=fitz.Point(Lt.chunk.size_chunk[0],Lt.chunk.size_chunk[1])
-#            p2=fitz.Point(Lt.chunk.size_chunk[2],Lt.chunk.size_chunk[1])
-#            doc[Lt.pg].addLineAnnot(p1,p2)
+        #            print(Lt.chunk.size_chunk)
+        #            p1=fitz.Point(Lt.chunk.size_chunk[0],Lt.chunk.size_chunk[1])
+        #            p2=fitz.Point(Lt.chunk.size_chunk[2],Lt.chunk.size_chunk[1])
+        #            doc[Lt.pg].addLineAnnot(p1,p2)
 
         old_email = Lt.txt
 
@@ -1474,7 +1479,7 @@ def paste_key_words(output, Ks, key_words_parent=None):
                 k['pg'], k['pg'], k['chunk'].size_chunk, border=[1, 10, 1])  # add a link
 
 
-def do(f_name, doc, display=None):
+def do(f_name, doc, display=None, queue_to_gui=None):
     # app=wx.App(False)
     # frame=wx.Frame(None,wx.ID_ANY,"AutoBookmarker")
     # frame.Show(True)
@@ -1490,14 +1495,15 @@ def do(f_name, doc, display=None):
     with open(f_name, 'rb') as fn:
         ftree = get_toc(f_name)  # tree
         # get_labels_each_page(fn, f_name)
-        pages = get_text_each_page(fn, display)
+        pages = get_text_each_page(fn, display, queue_to_gui)
         if display:
             display.updatestatusBar('Creating bookmarks...')
+        if queue_to_gui:  queue_to_gui.put('Creating bookmarks...')
         from PyPDF2 import PdfWriter, PdfReader
 
         output = PdfWriter()  # open output
         input = PdfReader(fn)  # open input
-        output.page_mode="/UseOutlines"
+        output.page_mode = "/UseOutlines"
 
         running = True
         licycle = cycle(pages)
@@ -1509,7 +1515,7 @@ def do(f_name, doc, display=None):
 
         Dts = []
         Lts = []
-        total=len(pages)
+        total = len(pages)
         while count < len(pages):
             count += 1
             page, nextpage = nextpage, next(licycle)
@@ -1517,9 +1523,12 @@ def do(f_name, doc, display=None):
 
             p = input.pages[pg[0] - 1]
 
-            print("No chunks: %d" % len(chunks))
+            #print("No chunks: %d" % len(chunks))
             percentComplete = (float(count) / float(total)) * 100
             if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
+            if int(percentComplete) % 2 == 0 and queue_to_gui:
+                print('doing it for bkmks')
+                queue_to_gui.put(str(int(percentComplete)))
 
             if True:
                 output.add_page(p)  # insert page
@@ -1554,59 +1563,59 @@ def do(f_name, doc, display=None):
                 if cat_page == 2:  # letter
                     do_letter_this_page(page, input, output, Lts)
                 if cat_page == 3:  # instructions
-                    txt,pg=do_instructions_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_instructions_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 4:  # witness statement
-                    txt,pg=do_witness_statement_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_witness_statement_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 5:  # file note
-                    txt,pg=do_file_note_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_file_note_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 6:
-                    txt,pg=do_index_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_index_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 7:
-                    txt,pg=do_claim_form_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_claim_form_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 8:
-                    txt,pg=do_poc_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_poc_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 9:
-                    txt,pg=do_DQ_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_DQ_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 10:
-                    txt,pg=do_NTD_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_NTD_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 11:
-                    txt,pg=do_D_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_D_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 12:
-                    txt,pg=do_NAC_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_NAC_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 13:
-                    txt,pg=do_LIST_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_LIST_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 14:
-                    txt,pg=do_CNF_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_CNF_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 15:
-                    txt,pg=do_offer_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_offer_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 16:
-                    txt,pg=do_order_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_order_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 17:
-                    txt,pg=do_CRU_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_CRU_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 18:
-                    txt,pg=do_schedule_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_schedule_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 19:
-                    txt,pg=do_conference_note_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_conference_note_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 if cat_page == 20:
-                    txt,pg=do_notice_of_funding_this_page(page, input, output, Lts)
-                    other_toc.append([2,txt,pg+1])
+                    txt, pg = do_notice_of_funding_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
                 print("")
                 print("")
 
@@ -1617,10 +1626,10 @@ def do(f_name, doc, display=None):
         add_dates_from_correspondence_to_key_words(key_words_list, Lts, Dts)
         key_words_list.sort(key=sort_key_words)
         # paste_dates(output, Dts, date_parent)
-        existingTOC=doc.get_toc(simple=False)
-        if len(Lts)>0:
-            initialPage=Lts[0][2]+1
-            entry=[1,"Correspondence",initialPage]
+        existingTOC = doc.get_toc(simple=False)
+        if len(Lts) > 0:
+            initialPage = Lts[0][2] + 1
+            entry = [1, "Correspondence", initialPage]
             existingTOC.append(entry)
         paste_letters(output, Lts, existingTOC, doc, letter_parent)
         if len(KEY_WORDS) > 0:
@@ -1628,33 +1637,36 @@ def do(f_name, doc, display=None):
         print("Matches: %d out of %d pages" % (len(pages) - no_matches, len(pages)))
         print("Blank pages: ", blank_pages)
 
-        if len(other_toc)>0:
-            existingTOC.append([1,"Other", other_toc[0][2]])
+        if len(other_toc) > 0:
+            existingTOC.append([1, "Other", other_toc[0][2]])
         for o in other_toc:
-            existingTOC.append([o[0],o[1],o[2]])
+            existingTOC.append([o[0], o[1], o[2]])
 
-        print (existingTOC)
+        print(existingTOC)
         doc.set_toc(existingTOC)
         doc.saveIncr()
 
-#        OUT_FILE = fn.name.replace(".pdf", "_.pdf")
-#        OUT_FILE = fn.name.replace(".pdf", ".pdf")
+        #        OUT_FILE = fn.name.replace(".pdf", "_.pdf")
+        #        OUT_FILE = fn.name.replace(".pdf", ".pdf")
         fn.close()
-#        outputStream = open(OUT_FILE, 'wb')  # creating result pdf JCT
-#        output.write(outputStream)  # writing to result pdf JCT
-#        outputStream.close()  # closing result JCT
-        if display: display.updatestatusBar("Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
+        #        outputStream = open(OUT_FILE, 'wb')  # creating result pdf JCT
+        #        output.write(outputStream)  # writing to result pdf JCT
+        #        outputStream.close()  # closing result JCT
+        if display: display.updatestatusBar(
+            "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
 
 def copyTOC(ftree, output):
     # Write bookmarks for children of this node
-    print (len(output.pages))
+    print(len(output.pages))
+
     def WriteChildren(CurrentNode, CurrentBookMark):
         if (CurrentNode.identifier != 0):  # i.e. skip root
             BkMkData = CurrentNode.data
             print(BkMkData.title, BkMkData.pageno)
             try:
-                CurrentBookMark = output.add_outline_item(title=BkMkData.title, pagenum=BkMkData.pageno, parent=CurrentBookMark)
+                CurrentBookMark = output.add_outline_item(title=BkMkData.title, pagenum=BkMkData.pageno,
+                                                          parent=CurrentBookMark)
             except Exception as e:
                 print(f"Error {e}")
                 pass
@@ -1717,15 +1729,15 @@ def print_errors():
     print(error_list)
 
 
-def externalDrop(data):
+def externalDrop(data, queue_to_gui=None):
     print("Data dropped:", data)
     global percentComplete
 
     fs = data.split("}")  # split by ;
-    print (fs)
+    print(fs)
     for f in fs:
         f = f.replace('{', "").strip()
-        print (f)
+        print(f)
         if f != "":
             percentComplete = 0
-            do(f,fitz.open(f))
+            do(f, fitz.open(f), None,queue_to_gui)

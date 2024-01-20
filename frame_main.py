@@ -4,6 +4,7 @@ import os
 import platform
 import sys
 import threading
+import time
 
 import wx
 import wx.adv
@@ -19,6 +20,7 @@ class FileDragAndDrop(wx.FileDropTarget):
 
     # The following line is marked as "signature does not match" in the IDE but it works ...
     def OnDropFiles(self, x, y, file_paths):
+        print('Launching...')
         return self.window.launch_action(file_paths)
 
 
@@ -161,10 +163,13 @@ class FrameMain(frame_main_gui.FrameMain):
             try:
                 # Store queue content in variable since reading an item from the queue also removes it from the queue.
                 current_message = self.queue_gui_to_function.get()
+                #note: message is always a string
+                print("Current message: ", current_message)
 
                 # Exit this loop as soon as a 'Finish', 'Cancel' or 'Error' message is found in queue.
                 # Otherwise adjust the percentage value of the gauge or replace the text above it.
                 if current_message == u'Finish':
+                    print('Finish')
                     break
                 elif current_message.isdigit():
                     # Convention: If the value in the queue is a digit set the gauge to that value.
@@ -184,7 +189,9 @@ class FrameMain(frame_main_gui.FrameMain):
 
     def cancel_action(self, event):
         self.queue_function_to_gui.put(u'Cancel', False)
+#        self.queue_function_to_gui.put(u'Finish', False)
         self.queue_gui_to_function.put(u'Cancelling...', False)
+ #       self.queue_gui_to_function.put(u'Finish', False)
 
     def on_close(self, event):
         self.Destroy()
