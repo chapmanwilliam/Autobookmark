@@ -2,7 +2,7 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
-build_options = {'packages': [], 'excludes': [], 'include_files': ['Resources/', 'Images/'],
+build_options = {'packages': [], 'excludes': [], 'include_files': ['Resources/', 'Images/'],'includes': ['fitz.mupdf'],
                  'build_exe': 'buildMacWidget/'}
 
 for dbmodule in ['dbhash', 'gdbm', 'dbm', 'dumbdbm']:
