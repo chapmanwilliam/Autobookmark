@@ -173,11 +173,6 @@ class FrameMain(frame_main_gui.FrameMain):
                 elif current_message.isdigit():
                     # Convention: If the value in the queue is a digit set the gauge to that value.
                     self.ProgressGauge.SetValue(int(current_message))
-                    wx.Yield()
-                    self.Layout()
-                    self.GetParent().Layout()
-                    self.Refresh()
-                    self.Update()
                 else:
                     # Convention: If value is a string (and not Finish/Error) replace the static text.
                     self.ProgressGaugeStaticText.SetLabel(current_message)
