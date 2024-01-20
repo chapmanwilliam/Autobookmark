@@ -2,14 +2,14 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
-build_options = {'packages': [], 'excludes': [], 'include_files': ['Resources/'], 'includes': ['fitz.mupdf'],'build_exe': 'buildMacDisplay/'}
+build_options = {'packages': ["fitz"], 'excludes': [], 'include_files': ['Resources/','Images/'], 'includes': ['fitz.mupdf'],'build_exe': 'buildMacWidget/'}
 
 import sys
 
 base = 'Win32GUI' if sys.platform == 'win32' else None
 
 executables = [
-    Executable('Display.py', base=base, target_name = 'AutobookmarkerMacDisplay', icon='Resources/logo.ico')
+    Executable('AutoBookmarker.py', base=base, target_name = 'AutobookmarkerMacWidget', icon='Resources/logo.ico')
 ]
 
 setup(name='Autobookmark',

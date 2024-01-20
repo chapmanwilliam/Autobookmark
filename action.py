@@ -23,4 +23,5 @@ def wait_some_time(queue_to_gui, queue_from_gui, file_path_list):
 
     queue_to_gui.put(u'Finished', False)
     time.sleep(0.5)
+    queue_to_gui.put(u'', False)
     return

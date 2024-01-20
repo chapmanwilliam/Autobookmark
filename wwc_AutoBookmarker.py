@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import print_function
-
 import collections
 import datetime
 import os.path
@@ -236,7 +235,8 @@ def get_labels_each_page(f, f_name):
 def get_text_each_page(fn, display=None, queue_to_gui=None, queue_from_gui=None, file_text=""):
     print("Getting text chunks each page...")
     if display: display.updatestatusBar("Getting text for each page....")
-    if queue_to_gui: queue_to_gui.put_nowait('Getting pages....' + file_text)
+    if queue_to_gui: queue_to_gui.put('Getting pages....' + file_text)
+
     global percentComplete
 
     with PdfMinerWrapper(fn.name) as doc:
@@ -251,7 +251,7 @@ def get_text_each_page(fn, display=None, queue_to_gui=None, queue_from_gui=None,
             print('Page no %d out of %d' % (page.pageid, NO_PAGES))
             percentComplete = (float(page.pageid) / float(NO_PAGES)) * 100
             if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
-            if int(percentComplete) % 2 == 0 and queue_to_gui: queue_to_gui.put_nowait(str(int(percentComplete)))
+            if int(percentComplete) % 2 == 0 and queue_to_gui: queue_to_gui.put(str(int(percentComplete)))
             if not queue_from_gui.empty():
                 if queue_from_gui.get() == u'Cancel': return None
 
@@ -1499,7 +1499,7 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_t
         if pages is None: return
         if display:
             display.updatestatusBar('Creating bookmarks...')
-        if queue_to_gui:  queue_to_gui.put('Bookmarks...' +file_text)
+        if queue_to_gui:  queue_to_gui.put('Bookmarks...' + file_text)
         from PyPDF2 import PdfWriter, PdfReader
 
         output = PdfWriter()  # open output
@@ -1531,7 +1531,6 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_t
             percentComplete = (float(count) / float(total)) * 100
             if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
             if int(percentComplete) % 2 == 0 and queue_to_gui:
-                print('doing it for bkmks')
                 queue_to_gui.put(str(int(percentComplete)))
 
             if True:

@@ -94,10 +94,14 @@ class FrameMain(wx.Frame):
         # Connect Events
         self.DragDropPanel.Bind(wx.EVT_ERASE_BACKGROUND, self.gui_panel_background)
         self.ProgressGaugePanel.Bind(wx.EVT_ERASE_BACKGROUND, self.gui_panel_background)
+        self.ProgressGaugePanel.Bind(wx.EVT_PAINT, self.test)
         self.ProgressGifPanel.Bind(wx.EVT_ERASE_BACKGROUND, self.gui_panel_background)
 
     def __del__(self):
         pass
+
+    def test(self, evt):
+        print('paint event')
 
     # Virtual event handlers, overide them in your derived class
     def gui_panel_background(self, event):
