@@ -233,10 +233,10 @@ def get_labels_each_page(f, f_name):
     return pages
 
 
-def get_text_each_page(fn, display=None, queue_to_gui=None, queue_from_gui=None):
+def get_text_each_page(fn, display=None, queue_to_gui=None, queue_from_gui=None, file_text=""):
     print("Getting text chunks each page...")
     if display: display.updatestatusBar("Getting text for each page....")
-    if queue_to_gui: queue_to_gui.put_nowait('Getting pages....')
+    if queue_to_gui: queue_to_gui.put_nowait('Getting pages....' + file_text)
     global percentComplete
 
     with PdfMinerWrapper(fn.name) as doc:
@@ -1479,7 +1479,7 @@ def paste_key_words(output, Ks, key_words_parent=None):
                 k['pg'], k['pg'], k['chunk'].size_chunk, border=[1, 10, 1])  # add a link
 
 
-def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None):
+def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_text=""):
     # app=wx.App(False)
     # frame=wx.Frame(None,wx.ID_ANY,"AutoBookmarker")
     # frame.Show(True)
@@ -1495,11 +1495,11 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None):
     with open(f_name, 'rb') as fn:
         ftree = get_toc(f_name)  # tree
         # get_labels_each_page(fn, f_name)
-        pages = get_text_each_page(fn, display, queue_to_gui,queue_from_gui)
+        pages = get_text_each_page(fn, display, queue_to_gui,queue_from_gui, file_text)
         if pages is None: return
         if display:
             display.updatestatusBar('Creating bookmarks...')
-        if queue_to_gui:  queue_to_gui.put('Bookmarks...')
+        if queue_to_gui:  queue_to_gui.put('Bookmarks...' +file_text)
         from PyPDF2 import PdfWriter, PdfReader
 
         output = PdfWriter()  # open output
@@ -1733,7 +1733,7 @@ def print_errors():
     print(error_list)
 
 
-def externalDrop(data, queue_to_gui=None, queue_from_gui=None):
+def externalDrop(data, queue_to_gui=None, queue_from_gui=None, file_text=""):
     print("Data dropped:", data)
     global percentComplete
 
@@ -1744,4 +1744,4 @@ def externalDrop(data, queue_to_gui=None, queue_from_gui=None):
         print(f)
         if f != "":
             percentComplete = 0
-            do(f, fitz.open(f), None,queue_to_gui, queue_from_gui)
+            do(f, fitz.open(f), None,queue_to_gui, queue_from_gui, file_text)

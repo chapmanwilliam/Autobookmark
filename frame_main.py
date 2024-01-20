@@ -167,7 +167,8 @@ class FrameMain(frame_main_gui.FrameMain):
 
                 # Exit this loop as soon as a 'Finish', 'Cancel' or 'Error' message is found in queue.
                 # Otherwise adjust the percentage value of the gauge or replace the text above it.
-                if current_message == u'Finish':
+                if current_message == u'Finished':
+                    self.ProgressGaugeStaticText.SetLabel(current_message)
                     break
                 elif current_message.isdigit():
                     # Convention: If the value in the queue is a digit set the gauge to that value.
