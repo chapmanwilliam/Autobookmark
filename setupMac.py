@@ -11,7 +11,7 @@ executables = [
 ]
 
 setup(name='Autobookmark',
-      version = '1.0',
+      version = '1.1',
       description = 'Bookmarks',
       options = {'build_exe': build_options},
       executables = executables)
