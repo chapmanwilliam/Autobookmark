@@ -19,7 +19,7 @@ import sys
 base = 'Win32GUI' if sys.platform == 'win32' else None
 
 executables = [
-    Executable('Autobookmarker.py', base=base, target_name='AutobookmarkerPCWidget', icon='Resources/logo.ico')
+    Executable('AutoBookmarker.py', base=base, target_name='AutobookmarkerPCWidget', icon='Resources/logo.ico')
 ]
 
 setup(name='Autobookmark',

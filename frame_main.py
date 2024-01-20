@@ -4,7 +4,6 @@ import os
 import platform
 import sys
 import threading
-import time
 
 import wx
 import wx.adv
