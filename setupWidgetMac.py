@@ -3,7 +3,7 @@ from cx_Freeze import setup, Executable
 # Dependencies are automatically detected, but it might need
 # fine tuning.
 build_options = {'packages': [], 'excludes': [], 'include_files': ['Resources/', 'Images/'],
-                 'build_exe': 'buildPCWidget/'}
+                 'build_exe': 'buildMacWidget/'}
 
 for dbmodule in ['dbhash', 'gdbm', 'dbm', 'dumbdbm']:
     try:
@@ -19,7 +19,7 @@ import sys
 base = 'Win32GUI' if sys.platform == 'win32' else None
 
 executables = [
-    Executable('Autobookmarker.py', base=base, target_name='AutobookmarkerPCWidget', icon='Resources/logo.ico')
+    Executable('Autobookmarker.py', base=base, target_name='AutobookmarkerMacWidget', icon='Resources/logo.ico')
 ]
 
 setup(name='Autobookmark',
