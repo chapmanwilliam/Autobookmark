@@ -305,6 +305,78 @@ def get_text_each_page(fn, display=None, queue_to_gui=None, queue_from_gui=None,
 
         return chunks
 
+def get_text_each_pageQT(fn, display=None, progress_signal=None, file_text=""):
+    print("Getting text chunks each page...")
+    if display: display.updatestatusBar("Getting text for each page....")
+    #if mainUI: mainUI.labelBookmark.put('Getting pages....' + file_text)
+
+    global percentComplete
+
+    with PdfMinerWrapper(fn.name) as doc:
+        count = 0
+        chunks = []
+        for x in range(0, NO_PAGES):
+            empty_list = []
+            chunks.append(empty_list)
+
+        for page in doc:
+            chunks_page = []
+            print('Page no %d out of %d' % (page.pageid, NO_PAGES))
+            percentComplete = (float(page.pageid) / float(NO_PAGES)) * 100
+            if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
+            if int(percentComplete) % 2 == 0 and progress_signal: progress_signal.progressBar.emit(int(percentComplete))
+            #if not queue_from_gui.empty():
+            #    if queue_from_gui.get() == u'Cancel': return None
+
+            size = [int(page.width), int(page.height)]
+            p = [page.pageid, NO_PAGES]
+            chunks[count].append(p)
+            chunks[count].append(size)
+            BOW = {}  # new bag of words for this page
+            for tbox in page:
+                if not isinstance(tbox, LTTextBox):
+                    continue
+                # print ' '*1, 'Block', 'bbox=(%0.2f, %0.2f, %0.2f, %0.2f)'% tbox.bbox
+                # text_file.write("Block bbox %0.2f, %0.2f, %0.2f, %0.2f\n" % tbox.bbox)
+                for obj in tbox:
+                    # print ' '*2, obj.get_text().encode('UTF-8')[:-1], '(%0.2f, %0.2f, %0.2f, %0.2f)'% tbox.bbox
+                    text_chunk = unidecode.unidecode(obj.get_text())
+                    size_chunk = obj.bbox
+                    size_chunk = [int(x) for x in size_chunk]
+                    for c in obj:
+                        if not isinstance(c, LTChar):
+                            continue
+                        # print c.get_text().encode('UTF-8'), '(%0.2f, %0.2f, %0.2f, %0.2f)'% c.bbox, c.fontname, c.size,
+                        font_chunk = c.fontname
+                        font_size_chunk = int(c.size)
+                        break
+                    # print
+                    l = get_location_on_page(get_left_of_square(size_chunk), size)
+                    # print tidy_generally(text_chunk)
+                    # print text_chunk
+                    Dt, Dt_txt = dparser.parse(
+                        text_chunk, fuzzy=True, dayfirst=True, yearfirst=False, default=def_date)
+                    chunk = Chunk(text_chunk, l, size_chunk, font_chunk, font_size_chunk,
+                                  size, Dt, Dt_txt)
+                    AnalyzeChunk(chunk, BOW, KEY_WORDS)
+                    # search for keywords
+                    for key_word in KEY_WORDS:
+                        if re.search(key_word, chunk.txt, re.IGNORECASE):
+                            k = {
+                                "keyword": key_word,
+                                "chunk": chunk,
+                                "pg": page.pageid - 1,
+                                "Dt": None,
+                                "Dt_txt": None
+                            }
+                            key_words_list.append(k)
+
+                    chunks_page.append(chunk)
+            chunks[count].append(chunks_page)
+            chunks[count].append(BOW)
+            count += 1
+
+        return chunks
 
 def AnalyzeChunk(chunk, BOW, KEY_WORDS):
     # updates BagOfWords
@@ -1658,6 +1730,184 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_t
         if display: display.updatestatusBar(
             "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
+def doQT(f_name, doc, display=None, progress_signal=None, file_text=""):
+    # app=wx.App(False)
+    # frame=wx.Frame(None,wx.ID_ANY,"AutoBookmarker")
+    # frame.Show(True)
+    # app.MainLoop()
+    # f_name=f_name.encode('string-escape')
+    # f_name = f_name.replace("\\", "\\\\")
+    # print f_name
+    other_toc = []
+    if os.path.isfile(f_name) == False:
+        print("O: file not found.")
+        print(f_name)
+        return
+    with open(f_name, 'rb') as fn:
+        ftree = get_toc(f_name)  # tree
+        # get_labels_each_page(fn, f_name)
+        pages = get_text_each_pageQT(fn, display, progress_signal, file_text)
+        if pages is None: return
+        if display:
+            display.updatestatusBar('Creating bookmarks...')
+#        if mainUI:  mainUI.labelBookmark.setText('Bookmarks...' + file_text)
+        from PyPDF2 import PdfWriter, PdfReader
+
+        output = PdfWriter()  # open output
+        input = PdfReader(fn)  # open input
+        output.page_mode = "/UseOutlines"
+
+        running = True
+        licycle = cycle(pages)
+        page = nextpage = next(licycle)
+        count = 0
+        no_matches = 0
+        no_blank_pages = 0
+        blank_pages = []
+
+        Dts = []
+        Lts = []
+        total = len(pages)
+        while count < len(pages):
+            count += 1
+            page, nextpage = nextpage, next(licycle)
+            pg, size_page, chunks, BOW = page
+
+            p = input.pages[pg[0] - 1]
+            #if not queue_from_gui.empty():
+               # if queue_from_gui.get() == u'Cancel': return None
+
+
+            #print("No chunks: %d" % len(chunks))
+            percentComplete = (float(count) / float(total)) * 100
+            if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
+            if int(percentComplete) % 2 == 0 and progress_signal:
+                progress_signal.emit(int(percentComplete))
+
+            if True:
+                output.add_page(p)  # insert page
+                # if p.getContents():
+                #	print p.getContents()['/Filter']
+                # else:
+                #	print "No contents"
+
+                # add bookmark for dates
+                if count == 1:
+                    # blank_parent = output.add_outline_item("Blanks", 0, parent=None)  # add bookmark
+                    # date_parent = output.add_outline_item("Dates", 0, parent=None)  # add bookmark
+                    letter_parent = output.add_outline_item(
+                        "Correspondence", 0, parent=None)  # add bookmark
+                    if len(KEY_WORDS) > 0:
+                        key_words_parent = output.add_outline_item(
+                            "Key words", 0, parent=None)  # add bookmark
+
+                # date_scrape(page, input, output, Dts, date_parent)
+
+                if len(chunks) < 5:
+                    no_blank_pages += 1
+                    # output.add_outline_item("Blank page", pg[0] - 1, blank_parent)
+                    blank_pages.append(pg[0] - 1)
+
+                cat_page = categorise_page(page)
+                if cat_page == 0:  # no match
+                    print("No match ", pg)
+                    no_matches += 1
+                if cat_page == 1:  # email
+                    do_email_this_page(page, nextpage, input, output, Lts)
+                if cat_page == 2:  # letter
+                    do_letter_this_page(page, input, output, Lts)
+                if cat_page == 3:  # instructions
+                    txt, pg = do_instructions_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 4:  # witness statement
+                    txt, pg = do_witness_statement_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 5:  # file note
+                    txt, pg = do_file_note_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 6:
+                    txt, pg = do_index_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 7:
+                    txt, pg = do_claim_form_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 8:
+                    txt, pg = do_poc_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 9:
+                    txt, pg = do_DQ_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 10:
+                    txt, pg = do_NTD_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 11:
+                    txt, pg = do_D_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 12:
+                    txt, pg = do_NAC_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 13:
+                    txt, pg = do_LIST_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 14:
+                    txt, pg = do_CNF_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 15:
+                    txt, pg = do_offer_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 16:
+                    txt, pg = do_order_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 17:
+                    txt, pg = do_CRU_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 18:
+                    txt, pg = do_schedule_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 19:
+                    txt, pg = do_conference_note_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                if cat_page == 20:
+                    txt, pg = do_notice_of_funding_this_page(page, input, output, Lts)
+                    other_toc.append([2, txt, pg + 1])
+                print("")
+                print("")
+
+        #	copy bookmarks from orginal file
+        copyTOC(ftree, output)
+        Dts.sort(key=sort_dates)
+        Lts.sort(key=sort_dates)
+        add_dates_from_correspondence_to_key_words(key_words_list, Lts, Dts)
+        key_words_list.sort(key=sort_key_words)
+        # paste_dates(output, Dts, date_parent)
+        existingTOC = doc.get_toc(simple=False)
+        if len(Lts) > 0:
+            initialPage = Lts[0][2] + 1
+            entry = [1, "Correspondence", initialPage]
+            existingTOC.append(entry)
+        paste_letters(output, Lts, existingTOC, doc, letter_parent)
+        if len(KEY_WORDS) > 0:
+            paste_key_words(output, key_words_list, key_words_parent)
+        print("Matches: %d out of %d pages" % (len(pages) - no_matches, len(pages)))
+        print("Blank pages: ", blank_pages)
+
+        if len(other_toc) > 0:
+            existingTOC.append([1, "Other", other_toc[0][2]])
+        for o in other_toc:
+            existingTOC.append([o[0], o[1], o[2]])
+
+        print(existingTOC)
+        doc.set_toc(existingTOC)
+        doc.saveIncr()
+
+        #        OUT_FILE = fn.name.replace(".pdf", "_.pdf")
+        #        OUT_FILE = fn.name.replace(".pdf", ".pdf")
+        fn.close()
+        #        outputStream = open(OUT_FILE, 'wb')  # creating result pdf JCT
+        #        output.write(outputStream)  # writing to result pdf JCT
+        #        outputStream.close()  # closing result JCT
+        if display: display.updatestatusBar(
+            "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
 def copyTOC(ftree, output):
     # Write bookmarks for children of this node

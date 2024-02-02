@@ -1,9 +1,28 @@
 # -*- coding: utf-8 -*-
 import sys
 
+from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout
+from PyQt6.uic import loadUi
+from PyQt6.QtCore import QThread, pyqtSignal
+from CdropLabel import dropLabel
+
 import wx
 
 import frame_main
+
+
+
+
+
+class MainUI(QMainWindow):
+    def __init__(self):
+        super(MainUI, self).__init__()
+        loadUi('MainWindow.ui', self)
+        self.labelBookmark = dropLabel(self)
+        self.labelChrono = dropLabel(self)
+        self.horizontalLayout.addWidget(self.labelBookmark)
+        self.horizontalLayout.addWidget(self.labelChrono)
+
 
 
 class AutoBookMarker(wx.App):
@@ -14,7 +33,13 @@ class AutoBookMarker(wx.App):
         self.frame.Show()
 
 
+#if __name__ == '__main__':
+#    app = AutoBookMarker()
+#    app.MainLoop()
+#    sys.exit()
+
 if __name__ == '__main__':
-    app = AutoBookMarker()
-    app.MainLoop()
-    sys.exit()
+    app = QApplication(sys.argv)
+    ui = MainUI()
+    ui.show()
+    app.exec()
