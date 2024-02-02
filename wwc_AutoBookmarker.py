@@ -3,6 +3,7 @@ from __future__ import print_function
 import collections
 import datetime
 import os.path
+from pathlib import Path
 import re
 import sys
 from itertools import cycle
@@ -16,7 +17,7 @@ from PyPDF2.generic import AnnotationBuilder
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams, LTTextBox, LTChar
 from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter, resolve1
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 from pdfminer.psparser import PSLiteral
@@ -305,31 +306,37 @@ def get_text_each_page(fn, display=None, queue_to_gui=None, queue_from_gui=None,
 
         return chunks
 
-def get_text_each_pageQT(fn, display=None, progress_signal=None, file_text=""):
+def get_text_each_pageQT(*args,**kwargs):
     print("Getting text chunks each page...")
-    if display: display.updatestatusBar("Getting text for each page....")
-    #if mainUI: mainUI.labelBookmark.put('Getting pages....' + file_text)
+    f_name=kwargs['f']
+    file_stem=Path(f_name).stem
+
+    fn=kwargs['fl']
+    progress_callback=kwargs['progress_callback']
+    pbar=kwargs['progress_bar']
+    info_callback=kwargs['info_callback']
+    info_callback.emit('Getting pages....' + file_stem,pbar)
+    pbar=kwargs['progress_bar']
 
     global percentComplete
+    no_pages=fn.page_count
+    print(f'No pages doc {fn.page_count}')
 
     with PdfMinerWrapper(fn.name) as doc:
         count = 0
         chunks = []
-        for x in range(0, NO_PAGES):
+        for x in range(0, no_pages):
             empty_list = []
             chunks.append(empty_list)
 
         for page in doc:
             chunks_page = []
-            print('Page no %d out of %d' % (page.pageid, NO_PAGES))
-            percentComplete = (float(page.pageid) / float(NO_PAGES)) * 100
-            if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
-            if int(percentComplete) % 2 == 0 and progress_signal: progress_signal.progressBar.emit(int(percentComplete))
-            #if not queue_from_gui.empty():
-            #    if queue_from_gui.get() == u'Cancel': return None
+            print('Page no %d out of %d' % (page.pageid, no_pages))
+            percentComplete = (float(page.pageid) / float(no_pages)) * 100
+            if int(percentComplete) % 2 == 0 and progress_callback: progress_callback.emit(int(percentComplete),pbar)
 
             size = [int(page.width), int(page.height)]
-            p = [page.pageid, NO_PAGES]
+            p = [page.pageid, no_pages]
             chunks[count].append(p)
             chunks[count].append(size)
             BOW = {}  # new bag of words for this page
@@ -1730,7 +1737,7 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_t
         if display: display.updatestatusBar(
             "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
-def doQT(f_name, doc, display=None, progress_signal=None, file_text=""):
+def doQT(*args, **kwargs):
     # app=wx.App(False)
     # frame=wx.Frame(None,wx.ID_ANY,"AutoBookmarker")
     # frame.Show(True)
@@ -1738,6 +1745,12 @@ def doQT(f_name, doc, display=None, progress_signal=None, file_text=""):
     # f_name=f_name.encode('string-escape')
     # f_name = f_name.replace("\\", "\\\\")
     # print f_name
+    f_name=kwargs['f']
+    doc=kwargs['fl']
+    progress_callback=kwargs['progress_callback']
+    info_callback=kwargs['info_callback']
+    file_stem=Path(f_name).stem
+    pbar=kwargs['progress_bar']
     other_toc = []
     if os.path.isfile(f_name) == False:
         print("O: file not found.")
@@ -1746,11 +1759,9 @@ def doQT(f_name, doc, display=None, progress_signal=None, file_text=""):
     with open(f_name, 'rb') as fn:
         ftree = get_toc(f_name)  # tree
         # get_labels_each_page(fn, f_name)
-        pages = get_text_each_pageQT(fn, display, progress_signal, file_text)
+        pages = get_text_each_pageQT(*args,**kwargs)
         if pages is None: return
-        if display:
-            display.updatestatusBar('Creating bookmarks...')
-#        if mainUI:  mainUI.labelBookmark.setText('Bookmarks...' + file_text)
+        info_callback.emit('Bookmarks...' + file_stem,pbar)
         from PyPDF2 import PdfWriter, PdfReader
 
         output = PdfWriter()  # open output
@@ -1780,9 +1791,8 @@ def doQT(f_name, doc, display=None, progress_signal=None, file_text=""):
 
             #print("No chunks: %d" % len(chunks))
             percentComplete = (float(count) / float(total)) * 100
-            if int(percentComplete) % 2 == 0 and display: display.updateprogressBar(percentComplete)
-            if int(percentComplete) % 2 == 0 and progress_signal:
-                progress_signal.emit(int(percentComplete))
+            if int(percentComplete) % 2 == 0 and progress_callback:
+                progress_callback.emit(int(percentComplete),pbar)
 
             if True:
                 output.add_page(p)  # insert page
@@ -1906,8 +1916,6 @@ def doQT(f_name, doc, display=None, progress_signal=None, file_text=""):
         #        outputStream = open(OUT_FILE, 'wb')  # creating result pdf JCT
         #        output.write(outputStream)  # writing to result pdf JCT
         #        outputStream.close()  # closing result JCT
-        if display: display.updatestatusBar(
-            "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
 def copyTOC(ftree, output):
     # Write bookmarks for children of this node

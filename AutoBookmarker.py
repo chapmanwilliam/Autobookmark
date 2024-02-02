@@ -22,6 +22,8 @@ class MainUI(QMainWindow):
         self.labelChrono = dropLabel(self)
         self.horizontalLayout.addWidget(self.labelBookmark)
         self.horizontalLayout.addWidget(self.labelChrono)
+        self.setWindowTitle('Autobookmark')
+
 
 
 

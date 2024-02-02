@@ -1,28 +1,52 @@
-from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QSizePolicy
+import traceback, sys
+from pathlib import Path
+import time
+
+from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QSizePolicy,QProgressBar
 from PyQt6 import QtCore
 from PyQt6.QtGui import *
 from PyQt6.QtCore import pyqtSignal, QThread, QObject, pyqtSlot, QRunnable, QThreadPool
 from wwc_AutoBookmarker import doQT
 import fitz
-from threading import Thread
-import os
+
+class WorkerSignals(QObject):
+    progress = pyqtSignal(int,object)
+    error = pyqtSignal(tuple)
+    result =pyqtSignal(str)
+    finished = pyqtSignal(object)
+    info = pyqtSignal(str,object)
 
 
 class Worker(QRunnable):
-    progress_signal = pyqtSignal(int)
 
-    def __init__(self, event):
+
+    def __init__(self, fn, *args, **kwargs):
         super().__init__()
-        self.event = event
+        self.fn = fn
+        self.args=args
+        self.kwargs=kwargs
+        self.signals=WorkerSignals()
+        self.pbar=QProgressBar()
+        self.pbar.setRange(0,100)
+        self.pbar.setValue(0)
+        self.pbar.setTextVisible(True)
+        self.pbar.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+        self.kwargs['progress_callback'] = self.signals.progress
+        self.kwargs['info_callback'] = self.signals.info
+        self.kwargs['progress_bar'] = self.pbar
 
+    @pyqtSlot()
     def run(self):
-        fs = [u.toLocalFile() for u in self.event.mimeData().urls()]
-        for f in fs:
-            f = f.replace('{', "").strip()
-            print(f)
-            if f != "":
-                percentComplete = 0
-                doQT(f, fitz.open(f), None, self.progress_signal)
+        try:
+            result=self.fn(*self.args,**self.kwargs)
+        except:
+            traceback.print_exc()
+            exctype,value =sys.exc_info()[:2]
+            self.signals.error.emit(exctype, value, traceback.format_exc())
+        else:
+            self.signals.result.emit(result)
+        finally:
+            self.signals.finished.emit(self.pbar)
 
 
 class dropLabel(QLabel):
@@ -35,8 +59,6 @@ class dropLabel(QLabel):
         x.setVerticalPolicy(QSizePolicy.Policy.Expanding)
         self.setSizePolicy(x)
 
-        self.mainUI.progressBar.setRange(0, 100)
-        self.mainUI.progressBar.setValue(0)
 
         f = self.font()
         f.setPointSize(20)  # sets the size to 50
@@ -50,8 +72,47 @@ class dropLabel(QLabel):
 
     def dropEvent(self, event):
         # TODO: check the file is fully downloaded from Dropbox
-        worker = Worker(event)
-        worker.progress_signal.connect(self.mainUI.progressBar.setValue)
-        self.p_thread = QThreadPool()
-        self.p_thread.start(worker)
-        pass
+        self.setAcceptDrops(False)
+        fs = [u.toLocalFile() for u in event.mimeData().urls()]
+        self.threadpool=QThreadPool()
+        print(f'Max threads: {self.threadpool.maxThreadCount()}')
+        for f in fs:
+            f = f.replace('{', "").strip()
+            print(f)
+            if f != "":
+                fl=fitz.open(f)
+                worker=Worker(doQT,f=f,fl=fl)
+                worker.signals.progress.connect(self.progress_fn)
+                worker.signals.finished.connect(self.thread_complete)
+                worker.signals.error.connect(self.thread_error)
+                worker.signals.result.connect(self.print_out)
+                worker.signals.info.connect(self.info)
+                worker.pbar.setFormat(Path(f).stem)
+                self.mainUI.verticalLayout.addWidget(worker.pbar)
+                self.threadpool.start(worker)
+        self.setAcceptDrops(True)
+
+    @pyqtSlot(int,object)
+    def progress_fn(self, n,pbar):
+        print(f"Percent {n}")
+        pbar.setValue(n)
+
+    @pyqtSlot(str)
+    def print_out(self,s):
+        print(s)
+
+    @pyqtSlot(str,object)
+    def info(self, s, pbar):
+        print(s)
+        pbar.setFormat(s)
+    @pyqtSlot(object)
+    def thread_complete(self,pbar):
+        print('Thread completed')
+        time.sleep(1)
+        pbar.setFormat('')
+        self.mainUI.verticalLayout.removeWidget(pbar)
+
+
+    @pyqtSlot(object)
+    def thread_error(self, obj):
+        print('Thread error')
