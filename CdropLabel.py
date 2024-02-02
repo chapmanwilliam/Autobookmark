@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QSizePolicy,QProgressB
 from PyQt6 import QtCore
 from PyQt6.QtGui import *
 from PyQt6.QtCore import pyqtSignal, QThread, QObject, pyqtSlot, QRunnable, QThreadPool
-from wwc_AutoBookmarker import doQT
+from wwc_AutoBookmarker import doQT, doChronoQT
 import fitz
 
 class WorkerSignals(QObject):
@@ -54,21 +54,51 @@ class dropLabel(QLabel):
         super().__init__(mainUI)
         self.mainUI = mainUI
         self.setAcceptDrops(True)
-        self.setText('DROP FILES HERE')
         x = QSizePolicy()
         x.setVerticalPolicy(QSizePolicy.Policy.Expanding)
         self.setSizePolicy(x)
 
-
         f = self.font()
         f.setPointSize(20)  # sets the size to 50
         self.setFont(f)
+
+        self.setStyleSheet("border: 1px solid black;")
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             event.accept()
         else:
             event.ignore()
+
+
+    @pyqtSlot(int,object)
+    def progress_fn(self, n,pbar):
+        print(f"Percent {n}")
+        pbar.setValue(n)
+
+    @pyqtSlot(str)
+    def print_out(self,s):
+        print(s)
+
+    @pyqtSlot(str,object)
+    def info(self, s, pbar):
+        print(s)
+        pbar.setFormat(s)
+    @pyqtSlot(object)
+    def thread_complete(self,pbar):
+        print('Thread completed')
+        time.sleep(1)
+        pbar.setFormat('')
+        self.mainUI.verticalLayout.removeWidget(pbar)
+
+    @pyqtSlot(object)
+    def thread_error(self, obj):
+        print('Thread error')
+
+class CdropLabelBookmarks(dropLabel):
+    def __init__(self,mainUI):
+        super().__init__(mainUI)
+        self.setText('Drop files for bookmarking')
 
     def dropEvent(self, event):
         # TODO: check the file is fully downloaded from Dropbox
@@ -92,27 +122,32 @@ class dropLabel(QLabel):
                 self.threadpool.start(worker)
         self.setAcceptDrops(True)
 
-    @pyqtSlot(int,object)
-    def progress_fn(self, n,pbar):
-        print(f"Percent {n}")
-        pbar.setValue(n)
+class CdropLabelChronology(dropLabel):
+    def __init__(self,mainUI):
+        super().__init__(mainUI)
+        self.setText('Drop files for chronology')
 
-    @pyqtSlot(str)
-    def print_out(self,s):
-        print(s)
+    def dropEvent(self, event):
+        fs = [u.toLocalFile().replace('{','').strip() for u in event.mimeData().urls()]
+        doChronoQT(*fs)
 
-    @pyqtSlot(str,object)
-    def info(self, s, pbar):
-        print(s)
-        pbar.setFormat(s)
-    @pyqtSlot(object)
-    def thread_complete(self,pbar):
-        print('Thread completed')
-        time.sleep(1)
-        pbar.setFormat('')
-        self.mainUI.verticalLayout.removeWidget(pbar)
+            #Get bookmarks
 
+            #For each bookmark
+                # strip [] and legal numbering
+                # is it a date?
+                # extract date
+                # extract description
+                # extract page and page label
+                # add to array of bookmarks
 
-    @pyqtSlot(object)
-    def thread_error(self, obj):
-        print('Thread error')
+        #Sort the array of bookmarks in date order
+
+        #Create pdf
+
+        #Write the array of bookmarks to the pdf
+
+        pass
+
+    def getBookmarks(self,file_name):
+        pass

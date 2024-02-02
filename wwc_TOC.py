@@ -83,6 +83,123 @@ def remove_square_brackets(txt):
     return txt
 
 
+def write_chrono(**kwargs):
+    arrBkMks=kwargs['arrBkMks']
+    if not 'title' in kwargs: kwargs['title']='Chronology'
+    if not 'margin' in kwargs: kwargs['margin']=25
+    kwargs['maxDepth']=6
+
+    new_doc=fitz.open() #doc for storing toc
+    lnks=[]
+
+    def breaktext(title, page, font_size, indent, width_pageref):
+        #returns list of lines to print for main text
+        lines=[] #stores each line of text
+        lines.append("") #add first line with empty string
+        title=title.strip() #remove leading and trailing spaces
+        words=title.split() #split into words
+        line=0 #which line we are on
+        for word in words: #iterate each word
+            line_width =indent + fitz.get_text_length(text=lines[line] + word, fontsize=font_size)
+            if line_width>page.rect.width-kwargs['margin'] - width_pageref:
+                #then we put this word onto newline
+                lines.append("")
+                line +=1
+                lines[line]=word + " "
+            else:
+                #otherwise we just add to this line
+                lines[line] +=word + " "
+        return lines
+
+    def add_page():
+        #adds a page
+        fmt = fitz.paper_rect("a4")
+        new_doc.new_page(width=fmt.width, height=fmt.height)
+        return new_doc[- 1]
+
+
+    total = len(arrBkMks)
+
+    indent = kwargs['margin']
+    y = 10
+    max_font_size = 20
+    font_size = 25
+    page = add_page()
+    w=page.rect.width
+    h=page.rect.height
+
+    #The title
+    ls = breaktext(kwargs['title'], page, font_size, indent, 0)  # break long text into lines
+    for l in ls:
+        y+=1.2 * font_size
+        page.insert_text(point=(indent, y), text=l, fontsize=font_size) #the title
+    page.draw_line(p1=(kwargs['margin'], y + (0.2 * font_size)), p2=(w - kwargs['margin'], y + (0.2 * font_size)),
+                  color=(0, 0, 0))
+    y += 10  # gap under contents line
+    count = 0
+
+
+    for bkmk in arrBkMks:
+        level = 0
+        title = remove_square_brackets(bkmk['description'])
+        pg = bkmk['page']
+        if level <= kwargs['maxDepth']:
+            #get page label
+            if pg > -1:
+                pg_label = bkmk['label']
+            else:
+                pg_label = 'n/a'  # bookmark doesn't point to valid page
+            # Set font size and colour depending on level
+            if level == 1:
+                font_size = max_font_size- 10
+                colour = (0, 0, 1)
+                indent = kwargs['margin']
+            else:
+                font_size = max_font_size - 10
+                colour = (0, 0, 0)
+                indent = kwargs['margin'] + 10 * level
+
+
+            width_pageref = fitz.get_text_length(text=pg_label, fontsize=font_size)
+
+            ls=breaktext(title,page,font_size, indent, width_pageref) #break long text into lines
+            if (y + len(ls)*font_size) + (len(ls)-1)*(0.2*font_size) + kwargs['margin'] > h:
+                page= add_page()  # add page if needed
+                y = kwargs['margin']
+            for l in ls:
+                y += 1.2 * font_size
+                page.insert_text(point=(indent, y), text=l, fontsize=font_size, color=colour) #insert main text
+                width_text = fitz.get_text_length(text=l, fontsize=font_size)
+
+            page.draw_line(p1=(indent + width_text + 2, y - 0.25 * font_size * 1.2),
+                          p2=(w - kwargs['margin'] - width_pageref - 2, y - 0.25 * font_size * 1.2), color=colour,
+                          dashes="[3] 0")
+            page.insert_text(point=((w - kwargs['margin']) - width_pageref, y), text=pg_label, fontsize=font_size,
+                            color=colour) #insert page label
+            # add link
+            stY=y-(len(ls)-1)*(1.2 * font_size)
+            pg = pg-1
+            if not pg == -1:
+                l = {'kind': 1, 'from': fitz.Rect(indent, stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
+                     type: 'goto', 'page': pg, 'nflink': True, 'zoom': 0.0}
+                lnks.append({'pgNo': page.number, 'link':l})
+        count += 1
+        percentComplete = (float(count) / float(total)) * 100
+#        if int(percentComplete) % 10 == 0:
+#            if display: display.updateprogressBar(percentComplete)
+
+    # add TOC labels
+#    _add_toc_label(new_doc)
+#    display.insertPages(new_doc,0)
+#    for l in lnks:
+#        l['link']['page']+=new_doc.page_count
+#        doc[l['pgNo']].insert_link(l['link'])
+    new_doc.save('Chrono test.pdf')
+    new_doc.close()
+#    display.readTree()
+#    if addHistory: display.adddocHistory({'code':'DOC_addtoc', 'options':options})
+#    if display: display.updatestatusBar('Finished TOC.')
+    return True
 
 
 def write_toc(doc, options, display=None, addHistory=True):

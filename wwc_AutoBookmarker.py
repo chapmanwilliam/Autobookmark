@@ -9,6 +9,8 @@ import sys
 from itertools import cycle
 from typing import Dict
 
+from wwc_parsebookmark import getdatefromText, getdatefromNode, gettextfromText, gettextpartDate, isValidDate, getdayofWeek
+
 import fitz  # pip install pymupdf
 import unidecode
 import wwc_parser as dparser
@@ -23,6 +25,7 @@ from pdfminer.pdfparser import PDFParser
 from pdfminer.psparser import PSLiteral
 from six.moves import range
 from treelib import Tree
+from wwc_TOC import remove_square_brackets, write_chrono
 
 # a.... 20/6/10   'assumes years <50 are 20??. So this is 20/6/2010
 # b.... 20/6/2010
@@ -1737,14 +1740,40 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_t
         if display: display.updatestatusBar(
             "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
+def getBkMks(TOC,doc):
+    #returns array of dict of bookmarks: {'date': xx.xx.xx, 'description': txt, 'page': page, 'label': label}
+    arrBkMks=[]
+    for t in TOC:
+        title = remove_square_brackets(t[1])
+        dt=getdatefromText(title)
+        pg = t[2]
+        label=doc[pg].get_label()
+        if dt:
+            dic={'date': dt, 'description':title, 'page':pg, 'label': label}
+            arrBkMks.append(dic)
+    return arrBkMks
+
+def getAllBkMks(*args):
+    #returns all bookmark dates from these files, sorted in ascending date order
+    arrBkMks=[]
+    for a in args:
+        doc=fitz.open(a)
+        TOC = doc.get_toc(simple=False)
+        arrBkMks+=getBkMks(TOC,doc)
+        doc.close()
+
+    def sort_BkMks(BkMk):
+        return BkMk['date'].replace(tzinfo=None)
+    arrBkMks.sort(key=sort_BkMks)
+    return arrBkMks
+
+def doChronoQT(*args,**kwargs):
+    arrBkMks=getAllBkMks(*args)
+    write_chrono(arrBkMks=arrBkMks)
+    print(arrBkMks)
+
+
 def doQT(*args, **kwargs):
-    # app=wx.App(False)
-    # frame=wx.Frame(None,wx.ID_ANY,"AutoBookmarker")
-    # frame.Show(True)
-    # app.MainLoop()
-    # f_name=f_name.encode('string-escape')
-    # f_name = f_name.replace("\\", "\\\\")
-    # print f_name
     f_name=kwargs['f']
     doc=kwargs['fl']
     progress_callback=kwargs['progress_callback']
@@ -1752,6 +1781,7 @@ def doQT(*args, **kwargs):
     file_stem=Path(f_name).stem
     pbar=kwargs['progress_bar']
     other_toc = []
+
     if os.path.isfile(f_name) == False:
         print("O: file not found.")
         print(f_name)
@@ -1785,8 +1815,6 @@ def doQT(*args, **kwargs):
             pg, size_page, chunks, BOW = page
 
             p = input.pages[pg[0] - 1]
-            #if not queue_from_gui.empty():
-               # if queue_from_gui.get() == u'Cancel': return None
 
 
             #print("No chunks: %d" % len(chunks))
@@ -1906,16 +1934,10 @@ def doQT(*args, **kwargs):
         for o in other_toc:
             existingTOC.append([o[0], o[1], o[2]])
 
-        print(existingTOC)
         doc.set_toc(existingTOC)
         doc.saveIncr()
 
-        #        OUT_FILE = fn.name.replace(".pdf", "_.pdf")
-        #        OUT_FILE = fn.name.replace(".pdf", ".pdf")
         fn.close()
-        #        outputStream = open(OUT_FILE, 'wb')  # creating result pdf JCT
-        #        output.write(outputStream)  # writing to result pdf JCT
-        #        outputStream.close()  # closing result JCT
 
 def copyTOC(ftree, output):
     # Write bookmarks for children of this node
