@@ -1740,18 +1740,40 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_t
         if display: display.updatestatusBar(
             "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
-def getBkMks(TOC,doc):
+def getBkMks(TOC,doc,file):
     #returns array of dict of bookmarks: {'date': xx.xx.xx, 'description': txt, 'page': page, 'label': label}
     arrBkMks=[]
     for t in TOC:
-        title = remove_square_brackets(t[1])
-        dt=getdatefromText(title)
-        pg = t[2]
+        title = gettextfromText(t[1])
+        dt=getdatefromText(t[1])
+        pg = t[2]-1
         label=doc[pg].get_label()
-        if dt:
-            dic={'date': dt, 'description':title, 'page':pg, 'label': label}
+        details=t[3]
+        if not 'italic' in details: details['italic']=False
+        if not 'color' in details:
+            details['color']=(0,0,0)
+        else:
+            color=tuple([round(x,4) for x in list(details['color'])]) #convert color elements to short floats
+        if dt and not details['italic']:
+            dic={'date': dt, 'description':title, 'page':pg, 'label': label,'file':file,'color':color}
             arrBkMks.append(dic)
     return arrBkMks
+
+def removeDuplicateBkMks(arrBkMks):
+    new_arrBkMks=[]
+    old_BkMk=None
+    for i in arrBkMks:
+        if not old_BkMk: #always add the first one
+            new_arrBkMks.append(i)
+            old_BkMk=i
+            continue
+        if (i['date'].date() - old_BkMk['date'].date())==datetime.timedelta(0) and i['description'] == old_BkMk['description']:
+            continue
+        else:
+            new_arrBkMks.append(i)
+            old_BkMk = i
+    return new_arrBkMks
+
 
 def getAllBkMks(*args):
     #returns all bookmark dates from these files, sorted in ascending date order
@@ -1759,18 +1781,17 @@ def getAllBkMks(*args):
     for a in args:
         doc=fitz.open(a)
         TOC = doc.get_toc(simple=False)
-        arrBkMks+=getBkMks(TOC,doc)
+        arrBkMks+=getBkMks(TOC,doc,a)
         doc.close()
-
     def sort_BkMks(BkMk):
         return BkMk['date'].replace(tzinfo=None)
     arrBkMks.sort(key=sort_BkMks)
+    arrBkMks=removeDuplicateBkMks(arrBkMks)
     return arrBkMks
 
 def doChronoQT(*args,**kwargs):
     arrBkMks=getAllBkMks(*args)
     write_chrono(arrBkMks=arrBkMks)
-    print(arrBkMks)
 
 
 def doQT(*args, **kwargs):

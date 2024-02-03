@@ -138,10 +138,43 @@ def write_chrono(**kwargs):
     y += 10  # gap under contents line
     count = 0
 
+    t = fitz.open("C:/Users/samsu/Dropbox/My documents/WWC Pigeon Hole/TEST LINK.pdf")
+    this_page = t[0]
+    ls = this_page.get_links()
+    #print(ls)
 
+    old_day=None
+    flag_change_day=True
     for bkmk in arrBkMks:
         level = 0
-        title = remove_square_brackets(bkmk['description'])
+        #If change in day then flag
+        if old_day:
+            if old_day.date()!=bkmk['date'].date():
+                flag_change_day=True
+            else:
+                flag_change_day=False
+        old_day=bkmk['date']
+        def format_date(bkmk):
+            df=[]
+            dt=bkmk['date']
+            bkmk['dtformat']=''
+            if flag_change_day:
+                df.append("%d/%m/%Y")
+                bkmk['indent']=10
+            else:
+                bkmk['indent']=63
+            if dt:
+                if dt.hour == 0 and dt.minute == 0 and dt.second == 0 and dt.microsecond == 0:
+                    pass
+                else:
+                    if dt.second==0:
+                        df.append('%H:%M')
+                    else:
+                        df.append('%H:%M:%S')
+                bkmk['dtformat'] =" ".join(df)
+
+        format_date(bkmk)
+        title = bkmk['date'].strftime(bkmk['dtformat'])+' '+bkmk['description']
         pg = bkmk['page']
         if level <= kwargs['maxDepth']:
             #get page label
@@ -152,36 +185,35 @@ def write_chrono(**kwargs):
             # Set font size and colour depending on level
             if level == 1:
                 font_size = max_font_size- 10
-                colour = (0, 0, 1)
+                colour = bkmk['color']
                 indent = kwargs['margin']
             else:
                 font_size = max_font_size - 10
-                colour = (0, 0, 0)
+                colour = bkmk['color']
                 indent = kwargs['margin'] + 10 * level
-
 
             width_pageref = fitz.get_text_length(text=pg_label, fontsize=font_size)
 
-            ls=breaktext(title,page,font_size, indent, width_pageref) #break long text into lines
+            ls=breaktext(title,page,font_size, bkmk['indent'], width_pageref) #break long text into lines
             if (y + len(ls)*font_size) + (len(ls)-1)*(0.2*font_size) + kwargs['margin'] > h:
                 page= add_page()  # add page if needed
                 y = kwargs['margin']
             for l in ls:
                 y += 1.2 * font_size
-                page.insert_text(point=(indent, y), text=l, fontsize=font_size, color=colour) #insert main text
+                page.insert_text(point=(bkmk['indent'], y), text=l, fontsize=font_size, color=bkmk['color']) #insert main text
                 width_text = fitz.get_text_length(text=l, fontsize=font_size)
 
-            page.draw_line(p1=(indent + width_text + 2, y - 0.25 * font_size * 1.2),
-                          p2=(w - kwargs['margin'] - width_pageref - 2, y - 0.25 * font_size * 1.2), color=colour,
-                          dashes="[3] 0")
+            page.draw_line(p1=(bkmk['indent'] + width_text + 2, y - 0.25 * font_size * 1.2),
+                          p2=(w - kwargs['margin'] - width_pageref - 2, y - 0.25 * font_size * 1.2), color=bkmk['color'],
+                          dashes="[3] 0") #insert dot dot dot
             page.insert_text(point=((w - kwargs['margin']) - width_pageref, y), text=pg_label, fontsize=font_size,
-                            color=colour) #insert page label
+                            color=bkmk['color']) #insert page label
             # add link
             stY=y-(len(ls)-1)*(1.2 * font_size)
-            pg = pg-1
-            if not pg == -1:
-                l = {'kind': 1, 'from': fitz.Rect(indent, stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
-                     type: 'goto', 'page': pg, 'nflink': True, 'zoom': 0.0}
+            #pg = pg-1
+            if pg>0:
+                l = {'kind': 5, 'from': fitz.Rect(bkmk['indent'], stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
+                     type: 'to', 'page': pg, 'nflink': True, 'zoom': 0.0,'file':bkmk['file'],'id':''}
                 lnks.append({'pgNo': page.number, 'link':l})
         count += 1
         percentComplete = (float(count) / float(total)) * 100
@@ -191,14 +223,11 @@ def write_chrono(**kwargs):
     # add TOC labels
 #    _add_toc_label(new_doc)
 #    display.insertPages(new_doc,0)
-#    for l in lnks:
+    for l in lnks:
 #        l['link']['page']+=new_doc.page_count
-#        doc[l['pgNo']].insert_link(l['link'])
+        new_doc[l['pgNo']].insert_link(l['link'])
     new_doc.save('Chrono test.pdf')
     new_doc.close()
-#    display.readTree()
-#    if addHistory: display.adddocHistory({'code':'DOC_addtoc', 'options':options})
-#    if display: display.updatestatusBar('Finished TOC.')
     return True
 
 

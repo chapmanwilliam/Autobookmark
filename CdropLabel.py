@@ -131,23 +131,3 @@ class CdropLabelChronology(dropLabel):
         fs = [u.toLocalFile().replace('{','').strip() for u in event.mimeData().urls()]
         doChronoQT(*fs)
 
-            #Get bookmarks
-
-            #For each bookmark
-                # strip [] and legal numbering
-                # is it a date?
-                # extract date
-                # extract description
-                # extract page and page label
-                # add to array of bookmarks
-
-        #Sort the array of bookmarks in date order
-
-        #Create pdf
-
-        #Write the array of bookmarks to the pdf
-
-        pass
-
-    def getBookmarks(self,file_name):
-        pass
