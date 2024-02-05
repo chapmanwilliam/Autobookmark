@@ -1752,6 +1752,7 @@ def getBkMks(TOC,doc,file):
         if not 'italic' in details: details['italic']=False
         if not 'color' in details:
             details['color']=(0,0,0)
+            color=(0,0,0)
         else:
             color=tuple([round(x,4) for x in list(details['color'])]) #convert color elements to short floats
         if dt and not details['italic']:
