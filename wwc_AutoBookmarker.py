@@ -1791,7 +1791,9 @@ def getAllBkMks(*args):
 
 def doChronoQT(*args,**kwargs):
     arrBkMks=getAllBkMks(*args)
-    write_chrono(arrBkMks=arrBkMks)
+    folder=Path(args[0]).resolve().parent
+    print(folder)
+    write_chrono(arrBkMks=arrBkMks,folder=folder)
 
 
 def doQT(*args, **kwargs):

@@ -2,8 +2,19 @@ import webcolors
 import fitz
 from fitz.utils import rule_dict
 from tkinter import messagebox
+import platform, subprocess,os
 
 annot_name='Chapman_'
+
+
+def openFile(filepath):
+    if platform.system() == 'Darwin':  # macOS
+        subprocess.call(('open', filepath))
+    elif platform.system() == 'Windows':  # Windows
+        os.startfile(filepath)
+    else:  # linux variants
+        subprocess.call(('xdg-open', filepath))
+
 
 def closest_colour(requested_colour):
     min_colours = {}
