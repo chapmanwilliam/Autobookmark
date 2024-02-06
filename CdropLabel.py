@@ -136,7 +136,8 @@ class dropLabelChrono(dropLabel):
         fs = [u.toLocalFile().replace('{','').strip() for u in event.mimeData().urls()]
         self.mainUI.settings.update({'Chronology':{'files':fs}})
         self.mainUI.saveSettings()
-        doChronoQT(*fs,remove_duplicates=self.parent.checkBox_removeDuplicates.isChecked())
+        doChronoQT(*fs,remove_duplicates=self.parent.checkBox_removeDuplicates.isChecked(),
+                   day=self.parent.checkBox_addDayOfWeek.isChecked())
 
 
 class CdropLayoutBkMks(QVBoxLayout):
@@ -181,7 +182,8 @@ class CdropLayoutChronology(QVBoxLayout):
         if 'Chronology' in self.mainUI.settings:
             if 'files' in self.mainUI.settings['Chronology']:
                 fs=[f for f in self.mainUI.settings['Chronology']['files']]
-                doChronoQT(*fs,remove_duplicates=self.checkBox_removeDuplicates.isChecked())
+                doChronoQT(*fs,remove_duplicates=self.checkBox_removeDuplicates.isChecked(),
+                           day=self.checkBox_addDayOfWeek.isChecked())
                 return
         print('Nothing saved from last time to repeat')
 

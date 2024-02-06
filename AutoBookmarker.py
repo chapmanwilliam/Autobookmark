@@ -19,7 +19,7 @@ class MainUI(QMainWindow):
     def __init__(self):
         super(MainUI, self).__init__()
         loadUi('MainWindow.ui', self)
-        self.settings={} #for system settings
+        self.settings={'Chronology':{'files':[],'removeDuplicates':2,'Age':False,'dayOfWeek':False}} #for system settings
         self.getSettings()
         self.labelBookmark = CdropLayoutBkMks(self)
         self.labelChrono = CdropLayoutChronology(self)

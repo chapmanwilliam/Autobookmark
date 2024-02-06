@@ -105,8 +105,11 @@ def write_chrono(**kwargs):
     if not 'title' in kwargs: kwargs['title'] = 'Chronology'
     if not 'margin' in kwargs: kwargs['margin'] = 25
     if not 'folder' in kwargs: kwargs['folder'] = ''
-    if not 'day' in kwargs: kwargs['day'] = False
+    if not 'day' in kwargs: kwargs['day'] = True
     kwargs['maxDepth'] = 6
+
+    font_size = 25
+
 
     new_doc = fitz.open()  # doc for storing toc
     lnks = []
@@ -141,7 +144,6 @@ def write_chrono(**kwargs):
     indent = kwargs['margin']
     y = 10
     max_font_size = 20
-    font_size = 25
     page = add_page()
     w = page.rect.width
     h = page.rect.height
@@ -156,6 +158,8 @@ def write_chrono(**kwargs):
     y += 10  # gap under contents line
     count = 0
 
+    font_size=10
+
     old_day = None
     flag_change_day = True
     for bkmk in arrBkMks:
@@ -169,26 +173,36 @@ def write_chrono(**kwargs):
         old_day = bkmk['date']
 
         def format_date(bkmk):
-            df = []
-            dt = bkmk['date']
-            bkmk['dtformat'] = ''
-            if flag_change_day:
-                df.append("%d/%m/%Y")
-                bkmk['indent'] = 10
+            dtStr = ''
+            dayOfWeek = ''
+            if kwargs['day']:
+                dayOfWeek = ' ' + bkmk['day'].ljust(2, ' ') + ' '
+                bkmk['indent'] = kwargs['margin'] + fitz.get_text_length(text="20/10/2020 Sa ", fontsize=font_size)
+                bkmk['indent_time'] = kwargs['margin'] + fitz.get_text_length(text="20/10/2020 Sa ", fontsize=font_size)
             else:
-                bkmk['indent'] = 63
-            if dt:
-                if dt.hour == 0 and dt.minute == 0 and dt.second == 0 and dt.microsecond == 0:
-                    pass
-                else:
-                    if dt.second == 0:
-                        df.append('%H:%M')
-                    else:
-                        df.append('%H:%M:%S')
-                bkmk['dtformat'] = " ".join(df)
+                bkmk['indent'] = kwargs['margin'] + fitz.get_text_length(text="20/10/2020 ", fontsize=font_size)
+                bkmk['indent_time'] = kwargs['margin'] + fitz.get_text_length(text="20/10/2020 ", fontsize=font_size)
 
-        format_date(bkmk)
-        title = bkmk['date'].strftime(bkmk['dtformat']) + ' ' + bkmk['description']
+            if flag_change_day:
+                dtStr = bkmk['date'].strftime('%d/%m/%Y') + dayOfWeek
+
+            return dtStr
+        def format_time(bkmk):
+            dtStr=''
+            if bkmk['date'].hour == 0 and bkmk['date'].minute == 0 and bkmk['date'].second == 0 and bkmk[
+                'date'].microsecond == 0:
+                pass
+            else:
+                if bkmk['date'].second == 0:
+                    dtStr += bkmk['date'].strftime('%H:%M')
+                else:
+                    dtStr += bkmk['date'].strftime('%H:%M:%S')
+                bkmk['indent'] += fitz.get_text_length(text="00:00:00 ", fontsize=font_size)
+            return dtStr
+
+        title_date=format_date(bkmk)
+        title_time=format_time(bkmk)
+        title_description = bkmk['description']
         pg = bkmk['page']
         if level <= kwargs['maxDepth']:
             # get page label
@@ -208,12 +222,21 @@ def write_chrono(**kwargs):
 
             width_pageref = fitz.get_text_length(text=pg_label, fontsize=font_size)
 
-            ls = breaktext(title, page, font_size, bkmk['indent'], width_pageref)  # break long text into lines
+            ls = breaktext(title_description, page, font_size, bkmk['indent'], width_pageref)  # break long text into lines
             if (y + len(ls) * font_size) + (len(ls) - 1) * (0.2 * font_size) + kwargs['margin'] > h:
                 page = add_page()  # add page if needed
                 y = kwargs['margin']
+
+            #insert the date
+            page.insert_text(point=(kwargs['margin'], y+1.2*font_size), text=title_date, fontsize=font_size,
+                                 color=bkmk['color'])  # insert date
+
+            #insert the date
+            page.insert_text(point=(bkmk['indent_time'], y+1.2*font_size), text=title_time, fontsize=font_size,
+                                 color=bkmk['color'])  # insert time
+
             for l in ls:
-                y += 1.2 * font_size
+                y += 1.2 * font_size  # move a line down
                 page.insert_text(point=(bkmk['indent'], y), text=l, fontsize=font_size,
                                  color=bkmk['color'])  # insert main text
                 width_text = fitz.get_text_length(text=l, fontsize=font_size)
