@@ -133,7 +133,6 @@ class dropLabelChrono(dropLabel):
         super().__init__(mainUI)
     def dropEvent(self, event):
         fs = [u.toLocalFile().replace('{','').strip() for u in event.mimeData().urls()]
-        #TODO add fs to settings
         self.mainUI.settings.update({'Chronology':{'files':fs}})
         self.mainUI.saveSettings()
         doChronoQT(*fs)
