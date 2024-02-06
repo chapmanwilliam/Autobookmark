@@ -1746,6 +1746,8 @@ def getBkMks(TOC,doc,file):
     for t in TOC:
         title = gettextfromText(t[1])
         dt=getdatefromText(t[1])
+        if dt:
+            dy=getdayofWeek(dt)
         pg = t[2]-1
         label=doc[pg].get_label()
         details=t[3]
@@ -1756,7 +1758,7 @@ def getBkMks(TOC,doc,file):
         else:
             color=tuple([round(x,4) for x in list(details['color'])]) #convert color elements to short floats
         if dt and not details['italic']:
-            dic={'date': dt, 'description':title, 'page':pg, 'label': label,'file':file,'color':color}
+            dic={'date': dt, 'description':title, 'page':pg, 'label': label,'file':file,'color':color,'day':dy}
             arrBkMks.append(dic)
     return arrBkMks
 
@@ -1776,8 +1778,9 @@ def removeDuplicateBkMks(arrBkMks):
     return new_arrBkMks
 
 
-def getAllBkMks(*args):
+def getAllBkMks(*args,**kwargs):
     #returns all bookmark dates from these files, sorted in ascending date order
+    if 'remove_duplicates' not in kwargs: kwargs['remove_duplicates'] =2
     arrBkMks=[]
     for a in args:
         doc=fitz.open(a)
@@ -1787,13 +1790,12 @@ def getAllBkMks(*args):
     def sort_BkMks(BkMk):
         return BkMk['date'].replace(tzinfo=None)
     arrBkMks.sort(key=sort_BkMks)
-    arrBkMks=removeDuplicateBkMks(arrBkMks)
+    if kwargs['remove_duplicates']: arrBkMks=removeDuplicateBkMks(arrBkMks)
     return arrBkMks
 
 def doChronoQT(*args,**kwargs):
-    arrBkMks=getAllBkMks(*args)
+    arrBkMks=getAllBkMks(*args,**kwargs)
     folder=Path(args[0]).resolve().parent
-    print(folder)
     write_chrono(arrBkMks=arrBkMks,folder=folder)
 
 

@@ -2,7 +2,7 @@ import traceback, sys
 from pathlib import Path
 import time
 
-from PyQt6.QtWidgets import QLabel, QPushButton, QSizePolicy,QProgressBar, QVBoxLayout
+from PyQt6.QtWidgets import QLabel, QPushButton, QSizePolicy,QProgressBar, QVBoxLayout, QCheckBox
 from PyQt6 import QtCore
 from PyQt6.QtGui import *
 from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot, QRunnable, QThreadPool, Qt
@@ -129,13 +129,14 @@ class dropLabelBkMk(dropLabel):
         self.setAcceptDrops(True)
 
 class dropLabelChrono(dropLabel):
-    def __init__(self,mainUI):
+    def __init__(self,mainUI,parent=None):
         super().__init__(mainUI)
+        self.parent=parent
     def dropEvent(self, event):
         fs = [u.toLocalFile().replace('{','').strip() for u in event.mimeData().urls()]
         self.mainUI.settings.update({'Chronology':{'files':fs}})
         self.mainUI.saveSettings()
-        doChronoQT(*fs)
+        doChronoQT(*fs,remove_duplicates=self.parent.checkBox_removeDuplicates.isChecked())
 
 
 class CdropLayoutBkMks(QVBoxLayout):
@@ -155,19 +156,52 @@ class CdropLayoutChronology(QVBoxLayout):
     def __init__(self,mainUI):
         super().__init__(mainUI)
         self.mainUI=mainUI
-        self.label=dropLabelChrono(self.mainUI)
+        self.label=dropLabelChrono(self.mainUI,self)
         self.label.setText('Chronology')
         self.button_repeat=QPushButton('Repeat')
+        self.checkBox_removeDuplicates=QCheckBox('Remove duplicates')
+        self.checkBox_addDayOfWeek=QCheckBox('Add day of week')
+        self.checkBox_addAge=QCheckBox('Add age')
+
         self.addWidget(self.label)
         self.addWidget(self.button_repeat)
+        self.addWidget(self.checkBox_removeDuplicates)
+        self.addWidget(self.checkBox_addDayOfWeek)
+        self.addWidget(self.checkBox_addAge)
+
         self.button_repeat.clicked.connect(self.repeat)
+        self.checkBox_removeDuplicates.stateChanged.connect(self.stateChangedRemoveDuplicates)
+        self.checkBox_addDayOfWeek.stateChanged.connect(self.stateChangedAddDayOfWeek)
+        self.checkBox_addAge.stateChanged.connect(self.stateChangedAddAge)
+
+        self.setSettings()
 
     def repeat(self,event):
         #repeats the chronology of last files used
         if 'Chronology' in self.mainUI.settings:
             if 'files' in self.mainUI.settings['Chronology']:
                 fs=[f for f in self.mainUI.settings['Chronology']['files']]
-                doChronoQT(*fs)
+                doChronoQT(*fs,remove_duplicates=self.checkBox_removeDuplicates.isChecked())
                 return
         print('Nothing saved from last time to repeat')
 
+
+    def setSettings(self):
+        if 'Chronology' in self.mainUI.settings:
+            if 'removeDuplicates' in self.mainUI.settings['Chronology']:
+                self.checkBox_removeDuplicates.setChecked(self.mainUI.settings['Chronology']['removeDuplicates'])
+            if 'dayOfWeek' in self.mainUI.settings['Chronology']:
+                self.checkBox_addDayOfWeek.setChecked(self.mainUI.settings['Chronology']['dayOfWeek'])
+            if 'Age' in self.mainUI.settings['Chronology']:
+                self.checkBox_addAge.setChecked(self.mainUI.settings['Chronology']['Age'])
+    def stateChangedRemoveDuplicates(self,state):
+        self.mainUI.settings['Chronology']['removeDuplicates']=state
+        self.mainUI.saveSettings()
+
+    def stateChangedAddDayOfWeek(self,state):
+        self.mainUI.settings['Chronology']['dayOfWeek']=state
+        self.mainUI.saveSettings()
+
+    def stateChangedAddAge(self,state):
+        self.mainUI.settings['Chronology']['Age']=state
+        self.mainUI.saveSettings()

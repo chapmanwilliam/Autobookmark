@@ -104,7 +104,8 @@ def write_chrono(**kwargs):
     arrBkMks = kwargs['arrBkMks']
     if not 'title' in kwargs: kwargs['title'] = 'Chronology'
     if not 'margin' in kwargs: kwargs['margin'] = 25
-    if not 'folder' in kwargs: kwargs['folder']=''
+    if not 'folder' in kwargs: kwargs['folder'] = ''
+    if not 'day' in kwargs: kwargs['day'] = False
     kwargs['maxDepth'] = 6
 
     new_doc = fitz.open()  # doc for storing toc
@@ -245,7 +246,7 @@ def write_chrono(**kwargs):
             new_doc.xref_set_key(l['xref'], 'A/NewWindow', 'true')
             new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
 
-    chronoFile=Path(kwargs['folder']) / 'Chronology.pdf'
+    chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
     new_doc.save(chronoFile)
     new_doc.close()
     openFile(chronoFile)
