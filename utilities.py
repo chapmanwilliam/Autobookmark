@@ -3,9 +3,18 @@ import fitz
 from fitz.utils import rule_dict
 from tkinter import messagebox
 import platform, subprocess,os
+from pathlib import Path
 
 annot_name='Chapman_'
 
+def getUniqueFileName(f):
+    #returns unique file name
+    count=1
+    c=f
+    while Path(c).is_file():
+        c=f.parent.joinpath(f.stem+' '+str(count)+f.suffix)
+        count+=1
+    return c
 
 def openFile(filepath):
     if platform.system() == 'Darwin':  # macOS

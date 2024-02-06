@@ -1,7 +1,7 @@
 # coding=latin-1
 import fitz
 from pathlib import Path
-from utilities import openFile
+from utilities import openFile,getUniqueFileName
 
 
 def max_depth(doc):
@@ -270,9 +270,11 @@ def write_chrono(**kwargs):
             new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
 
     chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
-    new_doc.save(chronoFile)
+    #TODO create unique filename
+    uchronoFile=getUniqueFileName(chronoFile)
+    new_doc.save(uchronoFile)
     new_doc.close()
-    openFile(chronoFile)
+    openFile(uchronoFile)
     print('finished')
     return True
 
