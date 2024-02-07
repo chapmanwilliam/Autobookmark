@@ -251,7 +251,7 @@ def write_chrono(**kwargs):
             stY = y - (len(ls) - 1) * (1.2 * font_size)
             # pg = pg-1
             # LINK_GOTOR is link to place in another pdf
-            if pg > 0:
+            if pg >=-1:
                 l = {'kind': fitz.LINK_GOTOR,
                      'from': fitz.Rect(bkmk['indent'], stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
                      'page': pg, 'zoom': 0.0, 'file': bkmk['file'], 'id': '', 'NewWindow': True}
@@ -259,16 +259,20 @@ def write_chrono(**kwargs):
         count += 1
         percentComplete = (float(count) / float(total)) * 1000
 
+    page=add_page() #apparently needed to trigger first_link on previous page
+
     # add TOC labels
     for l in lnks:
+        print(l['pgNo'])
         new_doc[l['pgNo']].insert_link(l['link'])
 
     for pg in new_doc:
-        lnks = pg.get_links()
+        lnks = pg.get_links() #TODO: failing to get links (no first link) on the last page
         for l in lnks:
-            print(new_doc.xref_object(l['x_ref']))
             new_doc.xref_set_key(l['xref'], 'A/NewWindow', 'true')
             new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
+
+    new_doc.delete_page(new_doc.page_count-1)
 
     chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
     uchronoFile=getUniqueFileName(chronoFile)

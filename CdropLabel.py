@@ -132,8 +132,8 @@ class dropLabelChrono(dropLabel):
         super().__init__(mainUI)
         self.parent=parent
     def dropEvent(self, event):
-        fs = [Path(u.toLocalFile().strip()) for u in event.mimeData().urls()]
-        self.mainUI.settings.update({'Chronology':{'files':[f.as_posix() for f in fs]}})
+        fs = [u.toLocalFile().strip() for u in event.mimeData().urls()]
+        self.mainUI.settings.update({'Chronology':{'files':[Path(f).as_posix() for f in fs]}})
         self.mainUI.saveSettings()
         doChronoQT(*fs,remove_duplicates=self.parent.checkBox_removeDuplicates.isChecked(),
                    day=self.parent.checkBox_addDayOfWeek.isChecked())

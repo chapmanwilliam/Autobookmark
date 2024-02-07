@@ -1750,6 +1750,7 @@ def getBkMks(TOC,doc,file):
             dy=getdayofWeek(dt)
         pg = t[2]-1
         label=doc[pg].get_label()
+        if label=='':label=str(pg+1)
         details=t[3]
         if not 'italic' in details: details['italic']=False
         if not 'color' in details:
