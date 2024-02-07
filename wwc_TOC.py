@@ -267,7 +267,7 @@ def write_chrono(**kwargs):
         new_doc[l['pgNo']].insert_link(l['link'])
 
     for pg in new_doc:
-        lnks = pg.get_links() #TODO: failing to get links (no first link) on the last page
+        lnks = pg.get_links()
         for l in lnks:
             new_doc.xref_set_key(l['xref'], 'A/NewWindow', 'true')
             new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
