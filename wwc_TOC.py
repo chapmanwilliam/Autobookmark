@@ -266,6 +266,7 @@ def write_chrono(**kwargs):
     for pg in new_doc:
         lnks = pg.get_links()
         for l in lnks:
+            print(new_doc.xref_object(l['x_ref']))
             new_doc.xref_set_key(l['xref'], 'A/NewWindow', 'true')
             new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
 

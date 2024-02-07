@@ -109,11 +109,10 @@ class dropLabelBkMk(dropLabel):
     def dropEvent(self, event):
         # TODO: check the file is fully downloaded from Dropbox
         self.setAcceptDrops(False)
-        fs = [u.toLocalFile() for u in event.mimeData().urls()]
+        fs = [Path(u.toLocalFile()) for u in event.mimeData().urls()]
         self.threadpool=QThreadPool()
         print(f'Max threads: {self.threadpool.maxThreadCount()}')
         for f in fs:
-            f = f.replace('{', "").strip()
             print(f)
             if f != "":
                 fl=fitz.open(f)
@@ -133,8 +132,8 @@ class dropLabelChrono(dropLabel):
         super().__init__(mainUI)
         self.parent=parent
     def dropEvent(self, event):
-        fs = [u.toLocalFile().replace('{','').strip() for u in event.mimeData().urls()]
-        self.mainUI.settings.update({'Chronology':{'files':fs}})
+        fs = [Path(u.toLocalFile().strip()) for u in event.mimeData().urls()]
+        self.mainUI.settings.update({'Chronology':{'files':[f.as_posix() for f in fs]}})
         self.mainUI.saveSettings()
         doChronoQT(*fs,remove_duplicates=self.parent.checkBox_removeDuplicates.isChecked(),
                    day=self.parent.checkBox_addDayOfWeek.isChecked())
@@ -142,7 +141,7 @@ class dropLabelChrono(dropLabel):
 
 class CdropLayoutBkMks(QVBoxLayout):
     def __init__(self,mainUI):
-        super().__init__(mainUI)
+        super().__init__()
         self.mainUI = mainUI
 
         self.label=dropLabelBkMk(self.mainUI,self)
@@ -155,7 +154,7 @@ class CdropLayoutBkMks(QVBoxLayout):
 
 class CdropLayoutChronology(QVBoxLayout):
     def __init__(self,mainUI):
-        super().__init__(mainUI)
+        super().__init__()
         self.mainUI=mainUI
         self.label=dropLabelChrono(self.mainUI,self)
         self.label.setText('Chronology')

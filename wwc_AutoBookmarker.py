@@ -1794,6 +1794,7 @@ def getAllBkMks(*args,**kwargs):
     return arrBkMks
 
 def doChronoQT(*args,**kwargs):
+    if not len(args): return
     if not 'day' in kwargs: kwargs['day']=False
     arrBkMks=getAllBkMks(*args,**kwargs)
     folder=Path(args[0]).resolve().parent
