@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
+from pathlib import Path
 
-from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QFileDialog
 from PyQt6.uic import loadUi
 from PyQt6.QtCore import QThread, pyqtSignal
-from CdropLabel import CdropLayoutBkMks, CdropLayoutChronology
+from CdropLabel import CdropLayoutBkMks, CdropLayoutChronology, CdropLayoutHyperlinks
 import json
 
 import wx
@@ -19,14 +20,23 @@ class MainUI(QMainWindow):
     def __init__(self):
         super(MainUI, self).__init__()
         loadUi('MainWindow.ui', self)
-        self.settings={'Chronology':{'files':[],'removeDuplicates':2,'Age':False,'dayOfWeek':False}} #for system settings
         self.getSettings()
         self.labelBookmark = CdropLayoutBkMks(self)
         self.labelChrono = CdropLayoutChronology(self)
+        self.labelHyperlinks=CdropLayoutHyperlinks(self)
         self.horizontalLayout.addLayout(self.labelBookmark)
         self.horizontalLayout.addLayout(self.labelChrono)
+        self.horizontalLayout.addLayout(self.labelHyperlinks)
         self.setWindowTitle('Autobookmark')
+        self.actionSet_reference_folder.triggered.connect(self.setRefFolder)
 
+    def setRefFolder(self):
+        dlg=QFileDialog(self)
+        dlg.setFileMode(QFileDialog.FileMode.Directory)
+        if dlg.exec():
+            dir=dlg.selectedFiles()[0]
+            self.settings['ReferenceFolder']=dir + '/'
+            self.saveSettings()
     def getSettings(self):
         try:
             f = open('settings.json')

@@ -99,7 +99,7 @@ def expand_indirect_references(doc, str):
     count=0
     for m in x:
         ref = int(m[1])
-        exp = doc.xrefObject(ref, compressed=True)
+        exp = doc.xref_object(ref, compressed=True)
         str = re.sub(m[0], exp, str)
         count+=1
     if count>0: str=expand_indirect_references(doc,str) #repeat until expanding exhausted
@@ -181,7 +181,7 @@ def parse_flags(str):
 def set_labels(doc, labels):
 
     arr_labels = [None] * doc.page_count   # for each page, what is the page label
-    dict = OrderedDict()   # for each pagelabel, there is a tuple of associated pages
+    dict = {}   # for each pagelabel, there is a tuple of associated pages
     if len(labels) > 0:
         for i in range(0, len(labels)):
             l1 = labels[i]
@@ -195,9 +195,9 @@ def set_labels(doc, labels):
                 lab = construct_label(l1['style'], l1['prefix'], l1['firstpagenum'] + i)
                 arr_labels[c] = lab
                 if lab in dict:
-                    dict[lab].append(c)
+                    dict[lab]['page'].append(c) #if there's repeat page_label add page to tuple
                 else:
-                    dict[lab]=[(c)]
+                    dict[lab]={'page':(c,),'file':doc.name} #the first page label of this name add page as tuple
                 i = i + 1
     else:
         c = 0

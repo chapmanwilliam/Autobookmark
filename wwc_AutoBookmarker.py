@@ -9,7 +9,7 @@ import sys
 from itertools import cycle
 from typing import Dict
 
-from wwc_parsebookmark import getdatefromText, getdatefromNode, gettextfromText, gettextpartDate, isValidDate, getdayofWeek
+from wwc_parsebookmark import getdatefromText, getdatefromNode, gettextpartDate, gettextfromText, gettextpartDate, isValidDate, getdayofWeek, getAge, remove_time
 
 import fitz  # pip install pymupdf
 import unidecode
@@ -1740,14 +1740,19 @@ def do(f_name, doc, display=None, queue_to_gui=None, queue_from_gui=None, file_t
         if display: display.updatestatusBar(
             "Finished bookmarking." + " Matches: %d out of %d pages." % (len(pages) - no_matches, len(pages)))
 
-def getBkMks(TOC,doc,file):
+def getBkMks(TOC,doc,file,folder,dob):
     #returns array of dict of bookmarks: {'date': xx.xx.xx, 'description': txt, 'page': page, 'label': label}
     arrBkMks=[]
+    print(Path(file).relative_to(folder))
     for t in TOC:
         title = gettextfromText(t[1])
+        dt_txt=gettextpartDate(t[1])
+        dt_txt=remove_time(dt_txt)
         dt=getdatefromText(t[1])
+        age=-1
         if dt:
             dy=getdayofWeek(dt)
+            age=getAge(dt, dob)
         pg = t[2]-1
         label=doc[pg].get_label()
         if label=='':label=str(pg+1)
@@ -1759,7 +1764,10 @@ def getBkMks(TOC,doc,file):
         else:
             color=tuple([round(x,4) for x in list(details['color'])]) #convert color elements to short floats
         if dt and not details['italic']:
-            dic={'date': dt, 'description':title, 'page':pg, 'label': label,'file':file,'color':color,'day':dy}
+            dic={'date': dt, 'dt_txt':dt_txt,'description':title, 'page':pg,
+                 'label': label,'file':Path(file).relative_to(folder),
+                 'color':color,'day':dy,
+                 'age':age}
             arrBkMks.append(dic)
     return arrBkMks
 
@@ -1783,10 +1791,12 @@ def getAllBkMks(*args,**kwargs):
     #returns all bookmark dates from these files, sorted in ascending date order
     if 'remove_duplicates' not in kwargs: kwargs['remove_duplicates'] =2
     arrBkMks=[]
+    folder = Path(args[0]).resolve().parent
+    dob=kwargs['dob']
     for a in args:
-        doc=fitz.open(a)
+        doc=fitz.open(folder / a)
         TOC = doc.get_toc(simple=False)
-        arrBkMks+=getBkMks(TOC,doc,a)
+        arrBkMks+=getBkMks(TOC,doc,a,folder,dob)
         doc.close()
     def sort_BkMks(BkMk):
         return BkMk['date'].replace(tzinfo=None)

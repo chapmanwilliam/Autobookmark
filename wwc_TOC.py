@@ -1,7 +1,7 @@
 # coding=latin-1
 import fitz
 from pathlib import Path
-from utilities import openFile,getUniqueFileName
+from utilities import openFile, getUniqueFileName
 
 
 def max_depth(doc):
@@ -106,10 +106,10 @@ def write_chrono(**kwargs):
     if not 'margin' in kwargs: kwargs['margin'] = 25
     if not 'folder' in kwargs: kwargs['folder'] = ''
     if not 'day' in kwargs: kwargs['day'] = True
+    if not 'age' in kwargs: kwargs['age'] = True
     kwargs['maxDepth'] = 6
 
     font_size = 25
-
 
     new_doc = fitz.open()  # doc for storing toc
     lnks = []
@@ -158,7 +158,7 @@ def write_chrono(**kwargs):
     y += 10  # gap under contents line
     count = 0
 
-    font_size=10
+    font_size = 10
 
     old_day = None
     flag_change_day = True
@@ -187,22 +187,21 @@ def write_chrono(**kwargs):
                 dtStr = bkmk['date'].strftime('%d/%m/%Y') + dayOfWeek
 
             return dtStr
+
         def format_time(bkmk):
-            dtStr=''
+            dtStr = None
             if bkmk['date'].hour == 0 and bkmk['date'].minute == 0 and bkmk['date'].second == 0 and bkmk[
                 'date'].microsecond == 0:
                 pass
             else:
                 if bkmk['date'].second == 0:
-                    dtStr += bkmk['date'].strftime('%H:%M')
+                    dtStr = bkmk['date'].strftime('%H:%M')
                 else:
-                    dtStr += bkmk['date'].strftime('%H:%M:%S')
-                bkmk['indent'] += fitz.get_text_length(text="00:00:00 ", fontsize=font_size)
+                    dtStr = bkmk['date'].strftime('%H:%M:%S')
             return dtStr
 
-        title_date=format_date(bkmk)
-        title_time=format_time(bkmk)
-        title_description = bkmk['description']
+        # title_date=format_date(bkmk)
+        # title_description = bkmk['description']
         pg = bkmk['page']
         if level <= kwargs['maxDepth']:
             # get page label
@@ -222,62 +221,87 @@ def write_chrono(**kwargs):
 
             width_pageref = fitz.get_text_length(text=pg_label, fontsize=font_size)
 
-            ls = breaktext(title_description, page, font_size, bkmk['indent'], width_pageref)  # break long text into lines
+            def get_max_x_cursor(x_cursor_max):
+                x_cursor_max += fitz.get_text_length(text="20/10/2020 ", fontsize=font_size)
+                if kwargs['day']:
+                    x_cursor_max += fitz.get_text_length(text=" Th ", fontsize=font_size)
+                if kwargs['age']:
+                    x_cursor_max += fitz.get_text_length(text=" 100.0 ", fontsize=font_size)
+                if format_time(bkmk):
+                    x_cursor_max += fitz.get_text_length(text="00:00:00 ", fontsize=font_size)
+                return x_cursor_max
+
+            ls = breaktext(bkmk['description'], page, font_size, get_max_x_cursor(kwargs['margin']),
+                           width_pageref)  # break long text into lines
             if (y + len(ls) * font_size) + (len(ls) - 1) * (0.2 * font_size) + kwargs['margin'] > h:
                 page = add_page()  # add page if needed
                 y = kwargs['margin']
 
-            #insert the date
-            page.insert_text(point=(kwargs['margin'], y+1.2*font_size), text=title_date, fontsize=font_size,
+            x_cursor = kwargs['margin']  # start at the margin
+            # insert the date
+            if flag_change_day:
+                page.insert_text(point=(x_cursor, y + 1.2 * font_size), text=bkmk['dt_txt'], fontsize=font_size,
                                  color=bkmk['color'])  # insert date
+            x_cursor += fitz.get_text_length(text="20/10/2020 ", fontsize=font_size)
 
-            #insert the date
-            page.insert_text(point=(bkmk['indent_time'], y+1.2*font_size), text=title_time, fontsize=font_size,
+            if kwargs['day']:
+                page.insert_text(point=(x_cursor, y + 1.2 * font_size), text=bkmk['day'], fontsize=font_size,
+                                 color=bkmk['color'])  # insert day
+                x_cursor += fitz.get_text_length(text=" Th ", fontsize=font_size)
+
+            if kwargs['age']:
+                page.insert_text(point=(x_cursor, y + 1.2 * font_size), text="{:.1f}".format(bkmk['age']),
+                                 fontsize=font_size,
+                                 color=bkmk['color'])  # insert day
+                x_cursor += fitz.get_text_length(text=" 100.0 ", fontsize=font_size)
+
+            # insert the time
+            if format_time(bkmk):
+                page.insert_text(point=(x_cursor, y + 1.2 * font_size), text=format_time(bkmk), fontsize=font_size,
                                  color=bkmk['color'])  # insert time
+                x_cursor += fitz.get_text_length(text="00:00:00 ", fontsize=font_size)
 
+            # insert the description over each line
             for l in ls:
                 y += 1.2 * font_size  # move a line down
-                page.insert_text(point=(bkmk['indent'], y), text=l, fontsize=font_size,
+                page.insert_text(point=(x_cursor, y), text=l, fontsize=font_size,
                                  color=bkmk['color'])  # insert main text
                 width_text = fitz.get_text_length(text=l, fontsize=font_size)
 
-            page.draw_line(p1=(bkmk['indent'] + width_text + 2, y - 0.25 * font_size * 1.2),
+            # insert the dots
+            page.draw_line(p1=(x_cursor + width_text + 2, y - 0.25 * font_size * 1.2),
                            p2=(w - kwargs['margin'] - width_pageref - 2, y - 0.25 * font_size * 1.2),
                            color=bkmk['color'],
                            dashes="[3] 0")  # insert dot dot dot
+            # insert the page label
             page.insert_text(point=((w - kwargs['margin']) - width_pageref, y), text=pg_label, fontsize=font_size,
                              color=bkmk['color'])  # insert page label
             # add link
             stY = y - (len(ls) - 1) * (1.2 * font_size)
             # pg = pg-1
             # LINK_GOTOR is link to place in another pdf
-            if pg >=-1:
+            if pg >= -1:
+
                 l = {'kind': fitz.LINK_GOTOR,
-                     'from': fitz.Rect(bkmk['indent'], stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
-                     'page': pg, 'zoom': 0.0, 'file': bkmk['file'], 'id': '', 'NewWindow': True}
+                     'from': fitz.Rect(x_cursor, stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
+                     'to': fitz.Point(0,0),
+                     'page': pg,
+                     'file': bkmk['file'],
+                     'zoom': 'Fit',
+                     'NewWindow': True}
                 lnks.append({'pgNo': page.number, 'link': l})
+                page.insert_link(l)
         count += 1
         percentComplete = (float(count) / float(total)) * 1000
 
-    page=add_page() #apparently needed to trigger first_link on previous page
-
-    # add TOC labels
-    for l in lnks:
-        print(l['pgNo'])
-        new_doc[l['pgNo']].insert_link(l['link'])
-
-    for pg in new_doc:
-        lnks = pg.get_links()
-        for l in lnks:
-            new_doc.xref_set_key(l['xref'], 'A/NewWindow', 'true')
-            new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
-
-    new_doc.delete_page(new_doc.page_count-1)
+    page = add_page()  # apparently needed to trigger first_link on previous page
+    new_doc.delete_page(new_doc.page_count - 1)
 
     chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
-    uchronoFile=getUniqueFileName(chronoFile)
+    uchronoFile = getUniqueFileName(chronoFile)
     new_doc.save(uchronoFile)
     new_doc.close()
+
     openFile(uchronoFile)
     print('finished')
     return True

@@ -7,6 +7,27 @@ from pathlib import Path
 
 annot_name='Chapman_'
 
+def showInFolder(filepath):
+
+    #opens file with default program
+    if platform.system() == 'Darwin':  # macOS
+        subprocess.call(["open", "-R", filepath])
+    elif platform.system() == 'Windows':  # Windows
+        FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
+        subprocess.run([FILEBROWSER_PATH, '/select,', os.path.normpath(filepath)])
+    else:  # linux variants
+        subprocess.call(('xdg-open', filepath))
+
+def openFile(filepath):
+    #opens file with default program
+    if platform.system() == 'Darwin':  # macOS
+        subprocess.call(('open', filepath))
+    elif platform.system() == 'Windows':  # Windows
+        os.startfile(filepath)
+    else:  # linux variants
+        subprocess.call(('xdg-open', filepath))
+
+
 def getUniqueFileName(f):
     #returns unique file name
     count=1
