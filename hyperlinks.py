@@ -4,28 +4,31 @@ from utilities import annot_name
 from utilities import openFile, getUniqueFileName
 
 from docx2pdf import convert
+from pyxml2pdf import *
 
 from wwc_page_labels import getpgLabelMapping
+from wwc_named_destinations import pdf_get_named_destinations
 import re
 import os
 from collections import OrderedDict
-#from wwc_gui_config import updateprogressBar, updatestatusBar, errorMessage
+
+# from wwc_gui_config import updateprogressBar, updatestatusBar, errorMessage
 
 
 open_trigger = "["  # if this appears at start of word, start hyperlinking what follows
 close_trigger = "]"  # if this appears at end of word, stop hyperlinking
 bHyperlinking = False  # flag that indicates when we are hyperlinking and when not
 CPR = "https://www.justice.gov.uk/courts/procedure-rules/civil/rules/"
-suffix='links'
+suffix = 'links'
+
 
 def format_links(doc):
-
-    red   = (1.0, 0.0, 0.0)
+    red = (1.0, 0.0, 0.0)
     green = (0.0, 1.0, 0.0)
 
     border = {'width': 1.0, 'dashes': [], 'style': 'U'}
 
-    internal_link_colors = {'stroke': red,   'fill': None}
+    internal_link_colors = {'stroke': red, 'fill': None}
     external_link_colors = {'stroke': green, 'fill': None}
 
     for page in doc:
@@ -38,55 +41,93 @@ def format_links(doc):
                 link.set_border(border)
                 link.set_colors(internal_link_colors)
             link = link.next
-def getDict(to_files):
-    #we want to get from each to_file:
-    # 1) whether to use prefix in the file name
-    # 2) the page labels mapped to page numbers
-    page_label_map={} #dictionary for page label mapping: {A3: {page_no: 4, 'file':file}}
+
+def getDictNamedDestinations(to_files):
+    d={}
     def Merge(dict1, dict2):
         res = {**dict1, **dict2}
         return res
 
-    d={}
     for f in to_files:
-        doc=fitz.open(f)
-        dict,arr_labels=getpgLabelMapping(doc) #dict is dictionary of labels return tuple of pages, arr_labels is list of page labels in page order
-        d=Merge(d,dict)
+        doc = fitz.open(f)
+        dict = pdf_get_named_destinations(
+            doc)  # dict is dictionary of labels return tuple of pages, arr_labels is list of page labels in page order
+        d = Merge(d, dict)
     return d
+
+def getDictPageLabels(to_files):
+    # we want to get from each to_file:
+    # 1) whether to use prefix in the file name
+    # 2) the page labels mapped to page numbers
+    d = {}  # dictionary for page label mapping: {A3: {page_no: 4, 'file':file}}
+
+    def Merge(dict1, dict2):
+        res = {**dict1, **dict2}
+        return res
+
+    for f in to_files:
+        doc = fitz.open(f)
+        dict, arr_labels = getpgLabelMapping(
+            doc)  # dict is dictionary of labels return tuple of pages, arr_labels is list of page labels in page order
+        d = Merge(d, dict)
+    return d
+
+
 def remove_links(doc):
-    count=0
-    total=doc.page_count
+    count = 0
+    total = doc.page_count
     for p in doc:  # iterate the document pages
         delete_links(p)
-        count +=1
-        percentComplete = int ((float(count) / float(total)) * 100)
+        count += 1
+        percentComplete = int((float(count) / float(total)) * 100)
 
 
-
-def hyperlink_(from_files,to_files):
-    dict=getDict(to_files) #get dictonary of references
+def hyperlink_(from_files, to_files):
+    dictPgLbs = getDictPageLabels(to_files)  # get dictonary of references to pgLbs
+    dictNmDt = getDictNamedDestinations(to_files) #get dictionary of references to named destinations
+    #TODO: perform checks if one reference appears more than once i.e. duplicate references
     def link_this_doc(from_f):
-        #check if word document: in which case convert to pdf first
-        if Path(from_f).suffix=='.doc' or Path(from_f).suffix=='.docx':
-            convert(from_f,Path(from_f).with_suffix('.pdf'))
-            doc=fitz.open(Path(from_f).with_suffix('.pdf'))
+        # check if word document: in which case convert to pdf first
+        if Path(from_f).suffix == '.doc' or Path(from_f).suffix == '.docx':
+            convert(from_f, Path(from_f).with_suffix('.pdf'))
+            doc = fitz.open(Path(from_f).with_suffix('.pdf'))
+        elif Path(from_f).suffix == '.opml':
+            #TODO: convert from opml
+            pass
+        elif Path(from_f).suffix == '.pdf':
+            doc = fitz.open(from_f)
         else:
-            doc=fitz.open(from_f)
+            print('Not an acceptable file')
+            return
 
-        for page in doc:
-            pattern = re.compile(r"\b[A-z]+\d+\b")  # matching pattern e.g. GP123
+        for page in doc: #TODO: what if references are to pages in the same file
+            pattern = re.compile(r"\b[A-z]+\d+\b")  # matching pattern e.g. GP123 #TODO: is it necessary to filter the words like this?
             words = page.get_text("words", sort=True)
             matches = [w for w in words if pattern.match(w[4])]
 
-            delete_links(page) #remove our special links from this page
+            delete_links(page)  # remove our special links from this page
 
             for match in matches:
-                m=pattern.search(match[4]).group(0)
-                if m in dict:
-                    rect=fitz.Rect(match[0],match[1],match[2],match[3])
-                    p=dict[m]['page'][0]
-                    file=os.path.relpath(dict[m]['file'],os.path.dirname(from_f))
-                    file=(Path(file).as_posix())
+                m = pattern.search(match[4]).group(0)
+                if m in dictNmDt: #is it one of our named destinations
+                    rect = fitz.Rect(match[0], match[1], match[2], match[3])
+                    dest=m
+                    file = os.path.relpath(dictNmDt[m]['file'], os.path.dirname(from_f))
+                    file = (Path(file).as_posix())
+                    l={ "kind": fitz.LINK_NAMED_R,
+                        "name": dest,
+                        "from": rect,
+                        "file": file,
+                        "zoom": 'Fit', #not needed, we accept the zoom of the destination
+                        "NewWindow": True
+                    }
+                    page.insert_link(l)
+                    continue #i.e. if we find a link to name destination, don't both with page label
+                if m in dictPgLbs: #is it one of our page label references
+                    rect = fitz.Rect(match[0], match[1], match[2], match[3])
+                    p = dictPgLbs[m]['page'][0] #use first of page references in case multiple
+                    file = os.path.relpath(dictPgLbs[m]['file'], os.path.dirname(from_f))
+                    file = (Path(file).as_posix())
                     l = {'kind': fitz.LINK_GOTOR,
                          'from': rect,
                          'to': fitz.Point(0, 0),
@@ -96,6 +137,8 @@ def hyperlink_(from_files,to_files):
                          'NewWindow': True}
                     page.insert_link(l)
 
+
+
         format_links(doc)
         doc.saveIncr()
         doc.close()
@@ -104,10 +147,11 @@ def hyperlink_(from_files,to_files):
     for from_f in from_files:
         link_this_doc(from_f)
 
-def hyperlink(doc):
-    fitz.TOOLS.set_annot_stem(annot_name+suffix)
 
-    page_range = '1-' + doc[doc.page_count-1].get_label() #default
+def hyperlink(doc):
+    fitz.TOOLS.set_annot_stem(annot_name + suffix)
+
+    page_range = '1-' + doc[doc.page_count - 1].get_label()  # default
     filename = doc.name
 
     p = Path.Path(filename).parents[0]
@@ -115,11 +159,9 @@ def hyperlink(doc):
     e = Path.Path(filename).suffix
     global bHyperlinking
 
-
-
-    count=0
-    total=doc.page_count
-    links=[]
+    count = 0
+    total = doc.page_count
+    links = []
     #	for page in doc:
     for page in doc:  # iterate the document pages
         links.append(0)
@@ -146,8 +188,8 @@ def hyperlink(doc):
                     page.insertLink(l)
                 else:  # reference to page in this or another file
                     if pg_ref['file'] == "":  # then we are going to page in this file
-#                            if pg_ref['word'] in dict:
-                        if len(doc.get_page_numbers(pg_ref['word']))>0:
+                        #                            if pg_ref['word'] in dict:
+                        if len(doc.get_page_numbers(pg_ref['word'])) > 0:
                             print("FOUND: " + pg_ref['word'])
                             l = {'kind': 1, 'from': fitz.Rect(pg_ref['rect']), type: 'goto',
                                  'page': doc.get_page_numbers(pg_ref['word'])[0], 'nflink': True, 'zoom': 0.0}
@@ -159,15 +201,16 @@ def hyperlink(doc):
                         filename = check_file_exists(filename, doc)
                         if not filename == "":
                             other_doc = fitz.open(filename)
-                            if len(other_doc.get_page_numbers(pg_ref['word']))>0:
+                            if len(other_doc.get_page_numbers(pg_ref['word'])) > 0:
                                 print("FOUND: " + pg_ref['word'])
                                 l = {'kind': 5, 'from': fitz.Rect(pg_ref['rect']), type: 'goto',
-                                     'page': other_doc.get_page_numbers(pg_ref['word'])[0], 'file': filename, 'zoom': 0.0,
+                                     'page': other_doc.get_page_numbers(pg_ref['word'])[0], 'file': filename,
+                                     'zoom': 0.0,
                                      'newWindow': True}
                                 page.insertLink(l)
                             other_doc.close()
-        #add_border_links(page)
-        count +=1
+        # add_border_links(page)
+        count += 1
         percentComplete = int((float(count) / float(total)) * 100)
 
     return True
@@ -205,7 +248,6 @@ def check_file_exists(filename, doc):
         if Path.Path(filename).is_file():
             return filename
     return ""
-
 
 
 def parse_word(r, word):
@@ -306,12 +348,12 @@ def get_widths_each_character(txt, s=12, w='normal'):
 
 
 def delete_links(page):
-    #deletes links with
+    # deletes links with
     lnks = page.get_links()
     for lnk in lnks:
-        id=lnk['id']
+        id = lnk['id']
         print(id)
-        #if id.find(annot_name+suffix)>-1:
+        # if id.find(annot_name+suffix)>-1:
         if 'fitz' in id: page.delete_link(lnk)
 
 
@@ -328,5 +370,3 @@ def trigger(txt):
     if last_char == close_trigger:
         c = True
     return o, c
-
-

@@ -4,8 +4,17 @@ from fitz.utils import rule_dict
 from tkinter import messagebox
 import platform, subprocess,os
 from pathlib import Path
+from wwc_page_labels import getpgLabelMapping
+
 
 annot_name='Chapman_'
+
+
+def named_destinations_from_page_labels(doc):
+    dict, arr_labels = getpgLabelMapping(doc)  # dict is dictionary of labels return tuple of pages, arr_labels is list of page labels in page order
+    for d in dict:
+        p = d['page'][0]
+        print(d,p)
 
 def showInFolder(filepath):
 
