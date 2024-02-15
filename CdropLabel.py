@@ -1,7 +1,7 @@
 import traceback, sys
 from pathlib import Path
 import time
-
+import os
 from PyQt6.QtWidgets import (QLabel, QPushButton, QSizePolicy,
                              QProgressBar, QVBoxLayout, QCheckBox,
                              QDateEdit, QHBoxLayout, QListWidget, QListWidgetItem, QAbstractItemView)
@@ -385,10 +385,11 @@ class list(QListWidget):
 
     def dropEvent(self, event):
         fs = [u.toLocalFile().strip() for u in event.mimeData().urls()]
-        rfs= [Path(f).relative_to(self.mainUI.settings['ReferenceFolder']) for f in fs]
+        #rfs= [Path(f).relative_to(self.mainUI.settings['ReferenceFolder']) for f in fs]
+        rfs=[os.path.relpath(f, os.path.dirname(self.mainUI.settings['ReferenceFolder'])) for f in fs]
         self.setList(rfs)
-        self.dropped_files_signal.emit(self.getRelFiles())
         super(list, self).dropEvent(event)
+        self.dropped_files_signal.emit(self.getRelFiles())
 
 
     def setAcceptableFiles(self,tup):

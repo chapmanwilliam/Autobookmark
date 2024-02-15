@@ -42,8 +42,10 @@ def format_links(doc):
                 link.set_colors(internal_link_colors)
             link = link.next
 
+
 def getDictNamedDestinations(to_files):
-    d={}
+    d = {}
+
     def Merge(dict1, dict2):
         res = {**dict1, **dict2}
         return res
@@ -54,6 +56,7 @@ def getDictNamedDestinations(to_files):
             doc)  # dict is dictionary of labels return tuple of pages, arr_labels is list of page labels in page order
         d = Merge(d, dict)
     return d
+
 
 def getDictPageLabels(to_files):
     # we want to get from each to_file:
@@ -84,60 +87,71 @@ def remove_links(doc):
 
 def hyperlink_(from_files, to_files):
     dictPgLbs = getDictPageLabels(to_files)  # get dictonary of references to pgLbs
-    dictNmDt = getDictNamedDestinations(to_files) #get dictionary of references to named destinations
-    #TODO: perform checks if one reference appears more than once i.e. duplicate references
-    def link_this_doc(from_f):
-        # check if word document: in which case convert to pdf first
+    dictNmDt = getDictNamedDestinations(to_files)  # get dictionary of references to named destinations
+
+    # TODO: perform checks if one reference appears more than once i.e. duplicate references
+    def insert_named_destination(from_f, page, rect, m, d):
+        file = os.path.relpath(d['file'], os.path.dirname(from_f))
+        file = (Path(file).as_posix())
+        l = {"kind": fitz.LINK_NAMED_R,
+             "name": m,
+             "from": rect,
+             "file": file,
+             "zoom": 'Fit',  # not needed, we accept the zoom of the destination
+             "NewWindow": True
+             }
+        page.insert_link(l)
+
+    def insert_page_destination(from_f, page, rect, p, d):
+        file = os.path.relpath(d['file'], os.path.dirname(from_f))
+        file = (Path(file).as_posix())
+        l = {'kind': fitz.LINK_GOTOR,
+             'from': rect,
+             'to': fitz.Point(0, 0),
+             'page': p,
+             'file': file,
+             'zoom': 'Fit',
+             'NewWindow': True}
+        page.insert_link(l)
+
+    def convert_file_if_needed(from_f):
         if Path(from_f).suffix == '.doc' or Path(from_f).suffix == '.docx':
             convert(from_f, Path(from_f).with_suffix('.pdf'))
             doc = fitz.open(Path(from_f).with_suffix('.pdf'))
+            return doc
         elif Path(from_f).suffix == '.opml':
-            #TODO: convert from opml
+            # TODO: convert from opml
             pass
         elif Path(from_f).suffix == '.pdf':
             doc = fitz.open(from_f)
+            return doc
         else:
             print('Not an acceptable file')
-            return
+            return None
 
-        for page in doc: #TODO: what if references are to pages in the same file
-            pattern = re.compile(r"\b[A-z]+\d+\b")  # matching pattern e.g. GP123 #TODO: is it necessary to filter the words like this?
+    def link_this_doc(from_f):
+        # check if word document: in which case convert to pdf first
+        doc=convert_file_if_needed(from_f)
+        if not doc: return
+
+        for page in doc:  # TODO: what if references are to pages in the same file
+            pattern = re.compile(
+                r"\b[A-z]+\d+\b")  # matching pattern e.g. GP123 #TODO: is it necessary to filter the words like this?
             words = page.get_text("words", sort=True)
             matches = [w for w in words if pattern.match(w[4])]
 
             delete_links(page)  # remove our special links from this page
 
-            for match in matches:
-                m = pattern.search(match[4]).group(0)
-                if m in dictNmDt: #is it one of our named destinations
-                    rect = fitz.Rect(match[0], match[1], match[2], match[3])
-                    dest=m
-                    file = os.path.relpath(dictNmDt[m]['file'], os.path.dirname(from_f))
-                    file = (Path(file).as_posix())
-                    l={ "kind": fitz.LINK_NAMED_R,
-                        "name": dest,
-                        "from": rect,
-                        "file": file,
-                        "zoom": 'Fit', #not needed, we accept the zoom of the destination
-                        "NewWindow": True
-                    }
-                    page.insert_link(l)
-                    continue #i.e. if we find a link to name destination, don't both with page label
-                if m in dictPgLbs: #is it one of our page label references
-                    rect = fitz.Rect(match[0], match[1], match[2], match[3])
-                    p = dictPgLbs[m]['page'][0] #use first of page references in case multiple
-                    file = os.path.relpath(dictPgLbs[m]['file'], os.path.dirname(from_f))
-                    file = (Path(file).as_posix())
-                    l = {'kind': fitz.LINK_GOTOR,
-                         'from': rect,
-                         'to': fitz.Point(0, 0),
-                         'page': p,
-                         'file': file,
-                         'zoom': 'Fit',
-                         'NewWindow': True}
-                    page.insert_link(l)
-
-
+            for word in words:  # TODO: what if sequence of words matches named destination? Should we use triggers?
+                # m = pattern.search(match[4]).group(0)
+                m = word[4].rstrip('.:,;')  # remove trailing punctuation
+                rect = fitz.Rect(word[0], word[1], word[2], word[3])
+                if m in dictNmDt:
+                    insert_named_destination(from_f, page, rect, m, dictNmDt[m])  # is it one of our named destinations
+                    continue  # i.e. if we find a link to name destination, don't bother with page label
+                if m in dictPgLbs:  # is it one of our page label references
+                    p = dictPgLbs[m]['page'][0]  # use first of page references in case multiple
+                    insert_page_destination(from_f, page, rect, p, dictPgLbs[m])
 
         format_links(doc)
         doc.saveIncr()
