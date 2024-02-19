@@ -3,7 +3,7 @@ from pathlib import Path
 import time
 import os
 from PyQt6.QtWidgets import (QLabel, QPushButton, QSizePolicy,
-                             QProgressBar, QVBoxLayout, QCheckBox,
+                             QProgressBar, QVBoxLayout, QCheckBox, QLineEdit,
                              QDateEdit, QHBoxLayout, QListWidget, QListWidgetItem, QAbstractItemView)
 from PyQt6 import QtCore
 from PyQt6.QtGui import *
@@ -278,8 +278,10 @@ class CdropLayoutChronology(QVBoxLayout):
         self.checkBox_addDayOfWeek=QCheckBox('Add day of week')
         self.checkBox_addAge=QCheckBox('Add age')
         self.dateEdit_DOB=QDateEdit()
+        self.name=QLineEdit()
 
         self.addWidget(self.button_chrono)
+        self.addWidget(self.name)
         self.addWidget(self.checkBox_removeDuplicates)
         self.addWidget(self.checkBox_addDayOfWeek)
         hLayout=QHBoxLayout()
@@ -294,6 +296,7 @@ class CdropLayoutChronology(QVBoxLayout):
         self.checkBox_addAge.stateChanged.connect(self.stateChangedAddAge)
         self.dateEdit_DOB.dateChanged.connect(self.dateChanged)
         self.list.list.dropped_files_signal.connect(self.saveSettingsFromList)
+        self.name.editingFinished.connect(self.nameChanged)
 
 
         self.setSettings()
@@ -303,6 +306,7 @@ class CdropLayoutChronology(QVBoxLayout):
         if fs:
             doChronoQT(*fs,remove_duplicates=self.checkBox_removeDuplicates.isChecked(),
                        day=self.checkBox_addDayOfWeek.isChecked(),
+                       title=self.name.text(),
                        dob=datetime.combine(self.dateEdit_DOB.date().toPyDate(),datetime.min.time()))
 
     @pyqtSlot(object)
@@ -310,6 +314,10 @@ class CdropLayoutChronology(QVBoxLayout):
         self.mainUI.settings['Chronology']['files']=fs
         self.mainUI.saveSettings()
 
+    @pyqtSlot()
+    def nameChanged(self):
+        self.mainUI.settings['Chronology']['name']=self.name.text()
+        self.mainUI.saveSettings()
     def setSettings(self):
         if 'Chronology' in self.mainUI.settings:
             if 'removeDuplicates' in self.mainUI.settings['Chronology']:
@@ -322,6 +330,8 @@ class CdropLayoutChronology(QVBoxLayout):
                 self.dateEdit_DOB.setDate(QtCore.QDate.fromString(self.mainUI.settings['Chronology']['DOB'],'dd-MM-yyyy'))
             if 'files' in self.mainUI.settings['Chronology']:
                 self.list.setList(self.mainUI.settings['Chronology']['files'])
+            if 'name' in self.mainUI.settings['Chronology']:
+                self.name.setText(self.mainUI.settings['Chronology']['name'])
 
     def stateChangedRemoveDuplicates(self,state):
         self.mainUI.settings['Chronology']['removeDuplicates']=state
@@ -404,11 +414,12 @@ class list(QListWidget):
                 item = QListWidgetItem(Path(f).stem + Path(f).suffix.lower())
                 item.setData(Qt.ItemDataRole.UserRole, f)
                 self.addItem(item)
-
+        self.flag_files_that_dont_exist()
     def getFiles(self):
         list=[]
         for i in range(self.count()):
-            list.append(str(Path(self.mainUI.settings['ReferenceFolder']) / self.item(i).data(Qt.ItemDataRole.UserRole)))
+            p=(Path(self.mainUI.settings['ReferenceFolder']) / self.item(i).data(Qt.ItemDataRole.UserRole)) #get full path
+            list.append(str(p))
         return list
 
     def getRelFiles(self):
@@ -416,6 +427,15 @@ class list(QListWidget):
         for i in range(self.count()):
             list.append(str(Path(self.item(i).data(Qt.ItemDataRole.UserRole))))
         return list
+
+    def flag_files_that_dont_exist(self):
+        for i in range(self.count()):
+            p=(Path(self.mainUI.settings['ReferenceFolder']) / self.item(i).data(Qt.ItemDataRole.UserRole)) #get full path
+            if not p.is_file():
+                #colour it red
+                self.item(i).setForeground(QtCore.Qt.GlobalColor.red)
+            else:
+                self.item(i).setForeground(QtCore.Qt.GlobalColor.blue)
 
 
 class layoutList(QVBoxLayout):
@@ -444,4 +464,6 @@ class layoutList(QVBoxLayout):
     def clear(self):
         self.list.clear()
         self.list.dropped_files_signal.emit(self.list.getFiles())
+
+
 

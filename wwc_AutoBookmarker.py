@@ -1809,7 +1809,7 @@ def doChronoQT(*args,**kwargs):
     if not 'day' in kwargs: kwargs['day']=False
     arrBkMks=getAllBkMks(*args,**kwargs)
     folder=Path(args[0]).resolve().parent
-    write_chrono(arrBkMks=arrBkMks,folder=folder,day=kwargs['day'])
+    write_chrono(arrBkMks=arrBkMks,folder=folder,day=kwargs['day'],title=kwargs['title'])
 
 
 def doQT(*args, **kwargs):

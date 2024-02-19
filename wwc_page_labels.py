@@ -1,6 +1,9 @@
 import re
 import sys
 from collections import OrderedDict
+from wwc_named_destinations import pdf_get_named_destinations
+import fitz
+from pikepdf import Pdf, Page, NameTree, make_page_destination, Dictionary,Name,Array
 
 #WILLIAM CHAPMAN 29/12/2020
 #READS AND WRITES PAGE LABELS TO PDF
@@ -74,7 +77,7 @@ def get_labels_from_doc(doc):
 
 def get_catalog(doc):
     #returns the catalog
-    root_xref = doc.pdf_catalog()  # get xref of the /Catalog
+    root_xref = doc.pdf_catalog()
     return doc.xref_object(root_xref, compressed=True)  # return object definition
 
 def getrelevantPartCatalog(cat, doc):
@@ -91,6 +94,22 @@ def getrelevantPartCatalog(cat, doc):
             if res<en: en=res
     str=cat[st: en]
     return str
+
+def getrelevantPartCatalogDests(cat, doc):
+    #returns the part of the string relevant to catalog
+    st=cat.find("/Dests")
+    if st<0:
+        print("'%s' has no destinations" % doc.name)
+        return None
+    #Go through catalog of types: https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf, page 141
+    en=9999999 #insanely high number
+    for category in catalogEntries:
+        res=cat.find("/" + category,st)
+        if res>st:
+            if res<en: en=res
+    str=cat[st: en]
+    return str
+
 
 def expand_indirect_references(doc, str):
     #Adobe pdf stores some labels as indirect references. So these have to be expanded first.
@@ -319,3 +338,189 @@ def update_catalog_nums(doc, labels):
         doc.updateObject(root_xref, new_cat)
     except:
         sys.exit("Problem saving the catalog.")
+
+
+def create_list_names(doc, names):
+    #where names is dictionary like {'name1': {'page' : page_no1, 'dest': '/FitH 842', 'file': 'C://'}
+    #returns a limits string and a names string for inserting into pdf
+    #TODO: need to sort names alphabetically in ascending order
+    names_pdf_string=''
+    first_name=None
+    last_name=None
+    for name in names:
+        if first_name is None: first_name=name
+        name_string='(' + name + ')'
+        pg_no=names[name]['page'][0]
+        dest='/Fit'
+        page_string='['+str(doc[pg_no].xref) + " 0 R"+dest +']'
+
+        new_xref,xref_str=create_new_xref(doc) #new object with destination
+        doc.xref_set_key(new_xref,'D', page_string)
+        names_pdf_string += name_string + xref_str
+    names_pdf_string='[' + names_pdf_string + ']'
+    last_name=name
+    limits_pdf_string="[(" + first_name + ")("+last_name+")]"
+    return limits_pdf_string, names_pdf_string
+
+def create_new_xref(doc):
+    new_xref=doc.get_new_xref()
+    xref_str=' ' + str(new_xref)+' 0 R'
+    doc.update_object(new_xref, "<<>>")
+    return new_xref,xref_str
+
+def create_new_kid(doc,xref_kids):
+    new_xref, xref_str=create_new_xref(doc)
+    tup = doc.xref_get_key(xref_kids, 'Kids')
+    arr_str=tup[1].strip('[]')
+    arr_str+=xref_str
+    arr_str='[' + arr_str + ']'
+    doc.xref_set_key(xref_kids,'Kids',arr_str)
+    print(new_xref)
+    return new_xref
+
+if __name__ == "__main__":
+    def get_xref_names():
+        return int(doc.xref_get_key(doc.pdf_catalog(), 'Names')[1][:-4])
+    def get_xref_dests():
+        cat_xref=get_xref_names()
+        for key in doc.xref_get_keys(cat_xref):
+            tup = doc.xref_get_key(cat_xref, key)
+            if key=='Dests':
+                return int(tup[1][:-4])
+
+    flag=False
+    def get_keys(x_ref,flag):
+        for key in doc.xref_get_keys(x_ref):
+            if key=='Names': flag=True
+            tup=doc.xref_get_key(x_ref, key)
+            print(x_ref, key, "=", tup)
+            if flag:
+                if tup[0]=='xref':
+                    new_xref=int(tup[1][:-4])
+                    get_keys(new_xref,flag)
+
+    def get_existing_nds(pdf):
+        #returns array of tuples ('name', xref)
+        try:
+            nt = NameTree(pdf.Root.Names.Dests)
+            try:
+                d=pdf.Root.Names.Dests.Names
+            except:
+                pdf.Root.Names.Dests.Names = Array()
+                pdf.Root.Names.Dests.Names.append(Dictionary())
+                pdf.Root.Names.Dests.Names = Array()
+            #return '['+''.join([(f'({k}){nt[k].objgen[0]} 0 R') for k in nt.keys()])+']'
+        except:
+            nt = NameTree.new(pdf)
+            pdf.Root.Names.Dests = nt.obj
+            pdf.Root.Names.Dests.Names = Array()
+            pdf.Root.Names.Dests.Names.append(Dictionary())
+            pdf.Root.Names.Dests.Names = Array()
+
+        return nt
+
+    def join_nds(a,b):
+        if a:
+            a=a.strip('[]')
+        else:
+            a=''
+        if b:
+            b=b.strip('[]')
+        else:
+            b=''
+        return '[' + a+b + ']'
+
+    #print(get_existing_nds('x'))
+    #    doc=fitz.open(r"C:\Users\samsu\Dropbox\My documents\WWC Pigeon Hole\22-04-20 HD v Wiltshire Police\Appeal\23-11-02 Permission granted HD v Wiltshire\Judgement first instance\CJ v Chief Constable of Wiltshire [2022] EWHC 1661 (QB).pdf")
+    doc=fitz.open(r"C:\Users\samsu\Dropbox\My documents\WWC Pigeon Hole\22-04-20 HD v Wiltshire Police\Appeal\23-11-02 Permission granted HD v Wiltshire\Judgement first instance\Document1 test.pdf")
+
+    d, arr = getpgLabelMapping(doc)
+#    nd=pdf_get_named_destinations(doc)
+#    print('nd',nd)
+    limits,names=create_list_names(doc,d)
+
+    pdf = Pdf.open(
+        r"C:\Users\samsu\Dropbox\My documents\WWC Pigeon Hole\22-04-20 HD v Wiltshire Police\Appeal\23-11-02 Permission granted HD v Wiltshire\Judgement first instance\Document1 test.pdf",
+    allow_overwriting_input=True)
+    nt=get_existing_nds(pdf)
+    print(nt.obj)
+
+
+    dest = make_page_destination(pdf, page_num=0, page_location="Fit")
+    pdf.Root.Names.Dests.Names.extend(["XX1", dest])  #combined=join_nds(get_existing_nds(doc),names)
+    #print(combined)
+    cat_xref=doc.pdf_catalog()
+
+
+    #print(create_list_names(doc,{'Test1': 0, 'Test2':1}))
+    #print(create_list_names(doc,d))
+
+    #limits,names=create_list_names(doc,d)
+    #new_kid_xref=create_new_kid(doc,2776)
+    #print(get_xref_names())
+#    print(get_xref_dests())
+
+    #get_keys(cat_xref ,False)
+
+#    print ('proposal', combined)
+    #print('before',doc.xref_get_key(get_xref_dests(),'Names'))
+#    doc.xref_set_key(get_xref_dests(),'Names',combined)
+
+    #print('after', doc.xref_get_key(get_xref_dests(), 'Names'))
+
+    #get_keys(cat_xref,False)
+
+    doc.close()
+
+ #   pdf = Pdf.open(filename_or_stream=r"C:\Users\samsu\Dropbox\My documents\WWC Pigeon Hole\22-04-20 HD v Wiltshire Police\Appeal\23-11-02 Permission granted HD v Wiltshire\Judgement first instance\Document1 test.pdf",
+  #                 allow_overwriting_input=True)
+    print(nt.obj)
+    pdf.save(pdf.filename)
+    #1 - if no Names/Dests ==> create Names/Dests/Kids (an array)
+    #2 - if Names/Dests/Names ==> i) copy Names ii) create Names/Dests/Kids
+    #3 -
+
+
+
+
+    #doc.xref_set_key(new_kid_xref,'Limits',limits)
+    #doc.xref_set_key(new_kid_xref,'Names',names)
+
+    #doc.saveIncr()
+
+
+
+
+    #print(get_xref_names())
+    #print(get_xref_dests())
+    #Type, Parent, Contents, MediaBox, Resources, Group
+
+
+    #<</Root/Names<<Dests<<Kids ['list of xrefs']
+    #<<Limits['start and finish of list of names as strings']
+    #<<Names[%s xref, %s xref]
+    #xref: /D[xref, /XYZ]
+
+    #48 J1 - this has some highlights on it page 3
+    #48 /D xref is /Annots, /Contents /Group /MediaBox /Parent /Resources /Type ('name', '/Page')
+
+    #48 O R is the page!
+    #48 Annots = ('xref', '1250 0 R')
+    #48 Contents = ('xref', '49 0 R')
+    #48 Group = ('dict', '<</CS/DeviceRGB/S/Transparency/Type/Group>>')
+    #48 MediaBox = ('array', '[0 0 595.45 841.7]')
+    #48 Parent = ('xref', '3 0 R') #this is list of pages
+    #48 Resources = ('dict', '<</Font<</FAAAAI 8 0 R/FAAAFB 51 0 R>>>>')
+    #48 Type = ('name', '/Page')
+
+    #57 O R is the page!
+    #57 - J10 -this has no highlights - page 5
+    #57 Type = ('name', '/Page') #the same
+    #57 Parent = ('xref', '3 0 R') # this is list of pages
+    #57 Contents = ('xref', '58 0 R') #different
+    #57 MediaBox = ('array', '[0 0 595.45 841.7]') #the same
+    #57 Resources = ('dict', '<</Font<</FAAAAI 8 0 R/FAAAFB 51 0 R>>>>') #the same
+    #57 Group = ('dict', '<</Type/Group/S/Transparency/CS/DeviceRGB>>') #the same
+
+    #So where does it note which is the correct page for the destination? Or is it a copy of the page?
+    #Yes, it's a straight copy of the page. It's simply a pointer to the page

@@ -149,7 +149,7 @@ def write_chrono(**kwargs):
     h = page.rect.height
 
     # The title
-    ls = breaktext(kwargs['title'], page, font_size, indent, 0)  # break long text into lines
+    ls = breaktext('Chronology: ' + kwargs.get('title',''), page, font_size, indent, 0)  # break long text into lines
     for l in ls:
         y += 1.2 * font_size
         page.insert_text(point=(indent, y), text=l, fontsize=font_size)  # the title
@@ -281,7 +281,7 @@ def write_chrono(**kwargs):
             # pg = pg-1
             # LINK_GOTOR is link to place in another pdf
             if pg >= -1:
-
+                #TODO: use named destinations as an alternative to page labels
                 l = {'kind': fitz.LINK_GOTOR,
                      'from': fitz.Rect(x_cursor, stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
                      'to': fitz.Point(0,0),
@@ -294,8 +294,7 @@ def write_chrono(**kwargs):
         count += 1
         percentComplete = (float(count) / float(total)) * 1000
 
-    page = add_page()  # apparently needed to trigger first_link on previous page
-    new_doc.delete_page(new_doc.page_count - 1)
+    page=new_doc.reload_page(page) #jorji says this fixes refresh
 
     chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
     uchronoFile = getUniqueFileName(chronoFile)
