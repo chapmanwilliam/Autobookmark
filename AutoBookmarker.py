@@ -21,6 +21,7 @@ class MainUI(QMainWindow):
         super(MainUI, self).__init__()
         loadUi('MainWindow.ui', self)
         self.getSettings()
+        self.settings={'ReferenceFolder':'','Chronology':{},'Hyperlinks':{}, 'Bookmarks':{}}
         self.labelBookmark = CdropLayoutBkMks(self)
         self.labelChrono = CdropLayoutChronology(self)
         self.labelHyperlinks=CdropLayoutHyperlinks(self)

@@ -221,6 +221,7 @@ class CdropLayoutBkMks(QVBoxLayout):
         self.mainUI.saveSettings()
 
     def setSettings(self):
+        if not self.mainUI.settings: return
         if 'Bookmarks' in self.mainUI.settings:
             if 'files' in self.mainUI.settings['Bookmarks']:
                 self.list.setList(self.mainUI.settings['Bookmarks']['files'])
@@ -260,6 +261,7 @@ class CdropLayoutHyperlinks(QVBoxLayout):
         self.mainUI.settings['Hyperlinks']['to_files']=fs
         self.mainUI.saveSettings()
     def setSettings(self):
+        if not self.mainUI.settings: return
         if 'Hyperlinks' in self.mainUI.settings:
             if 'from_files' in self.mainUI.settings['Hyperlinks']:
                 self.layout_list_from_files.list.setList(self.mainUI.settings['Hyperlinks']['from_files'])
@@ -319,6 +321,7 @@ class CdropLayoutChronology(QVBoxLayout):
         self.mainUI.settings['Chronology']['name']=self.name.text()
         self.mainUI.saveSettings()
     def setSettings(self):
+        if not self.mainUI.settings: return
         if 'Chronology' in self.mainUI.settings:
             if 'removeDuplicates' in self.mainUI.settings['Chronology']:
                 self.checkBox_removeDuplicates.setChecked(self.mainUI.settings['Chronology']['removeDuplicates'])
@@ -394,6 +397,7 @@ class list(QListWidget):
             #event.ignore()
 
     def dropEvent(self, event):
+        if not self.mainUI.settings: return
         fs = [u.toLocalFile().strip() for u in event.mimeData().urls()]
         #rfs= [Path(f).relative_to(self.mainUI.settings['ReferenceFolder']) for f in fs]
         rfs=[os.path.relpath(f, os.path.dirname(self.mainUI.settings['ReferenceFolder'])) for f in fs]

@@ -20,3 +20,6 @@ treelib~=1.7.0
 wxPython~=4.2.1
 numpy~=1.26.3
 PyQt6~=6.4.2
+pypdf
+docx2pdf
+pyxml2pdf
