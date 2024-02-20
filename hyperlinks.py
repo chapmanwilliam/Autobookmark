@@ -144,7 +144,7 @@ def hyperlink_(from_files, to_files):
 
             for word in words:  # TODO: what if sequence of words matches named destination? Should we use triggers?
                 # m = pattern.search(match[4]).group(0)
-                m = word[4].rstrip('.:,;')  # remove trailing punctuation
+                m = word[4].rstrip('.:,;-()')  # remove trailing punctuation
                 rect = fitz.Rect(word[0], word[1], word[2], word[3])
                 if m in dictNmDt:
                     insert_named_destination(from_f, page, rect, m, dictNmDt[m])  # is it one of our named destinations
