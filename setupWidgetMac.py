@@ -2,7 +2,9 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
-build_options = {'packages': ["fitz"], 'excludes': [], 'include_files': ['Resources/','Images/'], 'includes': ['fitz.mupdf'],'build_exe': 'buildMacWidget/'}
+build_options = {'packages': ["fitz"], 'excludes': [], 'include_files': ['Resources/','Images/'],
+                 'includes': ['fitz.mupdf'],'build_exe': 'buildMacWidget/',
+                 'zip_include_packages': ['encodings', "PyQt6"]}
 
 import sys
 

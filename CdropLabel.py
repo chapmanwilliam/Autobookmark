@@ -217,6 +217,7 @@ class CdropLayoutBkMks(QVBoxLayout):
 
     @pyqtSlot(object)
     def saveSettingsFromList(self, fs):
+        if not self.mainUI.settings.get('Bookmarks'):self.mainUI.settings['Bookmarks']={}
         self.mainUI.settings['Bookmarks']['files']=fs
         self.mainUI.saveSettings()
 
@@ -253,6 +254,7 @@ class CdropLayoutHyperlinks(QVBoxLayout):
 
     @pyqtSlot(object)
     def saveSettingsFromList(self, fs):
+        if not 'Hyperlinks' in self.mainUI.settings: self.mainUI.settings['Hyperlinks']={}
         self.mainUI.settings['Hyperlinks']['from_files']=fs
         self.mainUI.saveSettings()
 
@@ -380,7 +382,7 @@ class list(QListWidget):
         self.dropped_files_signal.emit(self.getRelFiles())
 
     def dbl_click(self,listWidgetItem):
-        f=Path(self.mainUI.settings['ReferenceFolder']) / listWidgetItem.data(Qt.ItemDataRole.UserRole)
+        f=Path(self.mainUI.settings.get('ReferenceFolder','')) / listWidgetItem.data(Qt.ItemDataRole.UserRole)
         openFile(f)
     def dragMoveEvent(self, event):
         if event.mimeData().hasUrls():
@@ -399,8 +401,7 @@ class list(QListWidget):
     def dropEvent(self, event):
         if not self.mainUI.settings: return
         fs = [u.toLocalFile().strip() for u in event.mimeData().urls()]
-        #rfs= [Path(f).relative_to(self.mainUI.settings['ReferenceFolder']) for f in fs]
-        rfs=[os.path.relpath(f, os.path.dirname(self.mainUI.settings['ReferenceFolder'])) for f in fs]
+        rfs=[os.path.relpath(f, os.path.dirname(self.mainUI.settings.get('ReferenceFolder',''))) for f in fs]
         self.setList(rfs)
         super(list, self).dropEvent(event)
         self.dropped_files_signal.emit(self.getRelFiles())
@@ -422,7 +423,7 @@ class list(QListWidget):
     def getFiles(self):
         list=[]
         for i in range(self.count()):
-            p=(Path(self.mainUI.settings['ReferenceFolder']) / self.item(i).data(Qt.ItemDataRole.UserRole)) #get full path
+            p=(Path(self.mainUI.settings.get('ReferenceFolder','')) / self.item(i).data(Qt.ItemDataRole.UserRole)) #get full path
             list.append(str(p))
         return list
 
@@ -434,7 +435,7 @@ class list(QListWidget):
 
     def flag_files_that_dont_exist(self):
         for i in range(self.count()):
-            p=(Path(self.mainUI.settings['ReferenceFolder']) / self.item(i).data(Qt.ItemDataRole.UserRole)) #get full path
+            p=(Path(self.mainUI.settings.get('ReferenceFolder','')) / self.item(i).data(Qt.ItemDataRole.UserRole)) #get full path
             if not p.is_file():
                 #colour it red
                 self.item(i).setForeground(QtCore.Qt.GlobalColor.red)
@@ -468,6 +469,5 @@ class layoutList(QVBoxLayout):
     def clear(self):
         self.list.clear()
         self.list.dropped_files_signal.emit(self.list.getFiles())
-
 
 

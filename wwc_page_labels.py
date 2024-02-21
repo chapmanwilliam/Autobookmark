@@ -214,7 +214,7 @@ def set_labels(doc, labels):
                 lab = construct_label(l1['style'], l1['prefix'], l1['firstpagenum'] + i)
                 arr_labels[c] = lab
                 if lab in dict:
-                    dict[lab]['page'].append(c) #if there's repeat page_label add page to tuple
+                    dict[lab]['page']=dict[lab]['page']+(c,) #if there's repeat page_label add page to tuple
                 else:
                     dict[lab]={'page':(c,),'file':doc.name} #the first page label of this name add page as tuple
                 i = i + 1

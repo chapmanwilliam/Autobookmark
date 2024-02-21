@@ -283,18 +283,26 @@ def write_chrono(**kwargs):
             if pg >= -1:
                 #TODO: use named destinations as an alternative to page labels
                 l = {'kind': fitz.LINK_GOTOR,
-                     'from': fitz.Rect(x_cursor, stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
-                     'to': fitz.Point(0,0),
-                     'page': pg,
-                     'file': bkmk['file'],
-                     'zoom': 'Fit',
-                     'NewWindow': True}
+                     'from': fitz.Rect(bkmk['indent'], stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
+                     'page': pg, 'zoom': 0.0, 'file': bkmk['file'], 'id': '', 'NewWindow': True}
                 lnks.append({'pgNo': page.number, 'link': l})
-                page.insert_link(l)
         count += 1
         percentComplete = (float(count) / float(total)) * 1000
 
-    page=new_doc.reload_page(page) #jorji says this fixes refresh
+    page=add_page() #apparently needed to trigger first_link on previous page
+
+    # add TOC labels
+    for l in lnks:
+        print(l['pgNo'])
+        new_doc[l['pgNo']].insert_link(l['link'])
+
+    for pg in new_doc:
+        lnks = pg.get_links()
+        for l in lnks:
+            new_doc.xref_set_key(l['xref'], 'A/NewWindow', 'true')
+            new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
+
+    new_doc.delete_page(new_doc.page_count-1)
 
     chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
     uchronoFile = getUniqueFileName(chronoFile)
