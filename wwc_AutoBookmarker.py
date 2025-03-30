@@ -1797,6 +1797,7 @@ def getAllBkMks(*args,**kwargs):
         doc=fitz.open(folder / a)
         TOC = doc.get_toc(simple=False)
         arrBkMks+=getBkMks(TOC,doc,a,folder,dob)
+        #doc=makeA4(doc)
         doc.close()
     def sort_BkMks(BkMk):
         return BkMk['date'].replace(tzinfo=None)
@@ -2063,3 +2064,21 @@ def externalDrop(data, queue_to_gui=None, queue_from_gui=None, file_text=""):
         if f != "":
             percentComplete = 0
             do(f, fitz.open(f), None,queue_to_gui, queue_from_gui, file_text)
+
+
+def makeA4(src):
+    doc = fitz.open()
+    for ipage in src:
+        if ipage.rect.width > ipage.rect.height:
+            fmt = fitz.paper_rect("a4-l")  # landscape if input suggests
+        else:
+            fmt = fitz.paper_rect("a4")
+        page = doc.new_page(width=fmt.width, height=fmt.height)
+        page.show_pdf_page(page.rect, src, ipage.number)
+
+    fname=src.name
+    TOC = src.get_toc(simple=False)
+    src.close()
+    doc.set_toc(TOC)
+    doc.save(fname)
+    return doc
