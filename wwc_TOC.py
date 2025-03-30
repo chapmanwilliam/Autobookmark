@@ -278,34 +278,44 @@ def write_chrono(**kwargs):
                              color=bkmk['color'])  # insert page label
             # add link
             stY = y - (len(ls) - 1) * (1.2 * font_size)
-            # pg = pg-1
+            if pg==489:
+                x=10
+            pg = pg-1
             # LINK_GOTOR is link to place in another pdf
             if pg >= -1:
+                fmt = fitz.paper_rect("a4")
                 #TODO: use named destinations as an alternative to page labels
-                l = {'kind': fitz.LINK_GOTOR,
-                     'from': fitz.Rect(bkmk['indent'], stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
-                     'page': pg, 'zoom': 0.0, 'file': bkmk['file'], 'id': '', 'NewWindow': True}
+                l = {'kind': fitz.LINK_GOTOR, #Points to a place in another PDF document.
+                     'from': fitz.Rect(0, stY - 0.5 * font_size * 1.2, w - kwargs['margin'], y),
+                     'to': fitz.Point(fmt.width,fmt.height),
+                     'page': pg,
+                     'zoom': 0.0,
+                     'file': bkmk['file'],
+                     'id': '',
+                     'NewWindow': True}
                 lnks.append({'pgNo': page.number, 'link': l})
         count += 1
         percentComplete = (float(count) / float(total)) * 1000
 
     page=add_page() #apparently needed to trigger first_link on previous page
+    chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
+    uchronoFile = getUniqueFileName(chronoFile)
 
-    # add TOC labels
+    # add lnks to each page
     for l in lnks:
         print(l['pgNo'])
         new_doc[l['pgNo']].insert_link(l['link'])
 
+
     for pg in new_doc:
-        lnks = pg.get_links()
-        for l in lnks:
+        actual_lnks = pg.get_links()
+        for l in actual_lnks:
             new_doc.xref_set_key(l['xref'], 'A/NewWindow', 'true')
-            new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]")
+            #new_doc.xref_set_key(l['xref'], 'A/D', f"[{l['page']}/Fit]") #for some reason l['page'] does not exist
 
     new_doc.delete_page(new_doc.page_count-1)
 
-    chronoFile = Path(kwargs['folder']) / 'Chronology.pdf'
-    uchronoFile = getUniqueFileName(chronoFile)
+
     new_doc.save(uchronoFile)
     new_doc.close()
 

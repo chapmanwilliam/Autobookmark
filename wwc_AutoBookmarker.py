@@ -1764,7 +1764,7 @@ def getBkMks(TOC,doc,file,folder,dob):
         else:
             color=tuple([round(x,4) for x in list(details['color'])]) #convert color elements to short floats
         if dt and not details['italic']:
-            dic={'date': dt, 'dt_txt':dt_txt,'description':title, 'page':pg,
+            dic={'date': dt, 'dt_txt':dt_txt,'description':title, 'page':pg+1,
                  'label': label,'file':Path(file).relative_to(folder),
                  'color':color,'day':dy,
                  'age':age}

@@ -50,7 +50,7 @@ def makedateUniform(str):
     def replace_function2(matched_object): #take 2020 and make it 20
         match = ""
         try:
-            match = matched_object.group(0)[3:]
+            match = matched_object.group(0)[2:]
             # match third group
         except:
             return ''
