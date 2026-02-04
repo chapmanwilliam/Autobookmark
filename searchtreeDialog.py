@@ -87,7 +87,6 @@ class searchtreeDialog():
                 self.incBkMk()
 
         def onClosing():
-            print('closing')
             self.display.updatestatusBar("")
             searchWindow.destroy()
 

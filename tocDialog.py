@@ -1,21 +1,25 @@
+"""
+tocDialog.py - Table of Contents configuration dialog.
+
+Allows users to create or remove a Table of Contents from the PDF document,
+with options for title and depth level.
+"""
+
 import tkinter as tk
+
+from baseDialog import BaseDialog
 from wwc_TOC import write_toc, delete_toc, isTOC
 
-class tocDialog(tk.Toplevel):
+
+class tocDialog(BaseDialog):
+    """Dialog for creating and managing Table of Contents."""
 
     def __init__(self, parent, display):
-        tk.Toplevel.__init__(self, parent)
-        self.parent=parent
-        self.display=display
-
-        self.displayDialog()
-
-
-
+        super().__init__(parent, display, title="Table of Contents")
 
     def displayDialog(self):
-
-        def buttons():
+        def updateButtons():
+            """Update button states based on whether TOC exists."""
             if isTOC(self.display.doc):
                 okButton.config(text='Replace TOC')
                 removeButton.config(state='normal')
@@ -23,90 +27,74 @@ class tocDialog(tk.Toplevel):
                 okButton.config(state='normal')
                 removeButton.config(state='disabled')
 
-
-        def onClosing():
-            print('closing')
-            self.display.updatestatusBar("")
-            self.destroy()
-
-        def onEscape(i):
-            onClosing()
-
         def getOptions():
-            options={"title":e1.get(), "maxDepth":intVardepth.get()}
-            return options
+            """Get current dialog options as dictionary."""
+            return {
+                "title": titleEntry.get(),
+                "maxDepth": depthVar.get()
+            }
 
         def setOptions(options):
-            e1.delete(0, tk.END)
-            e1.insert(0, options['title'])
-            if options['maxDepth']<=self.display.doc.max_depth():
-                intVardepth.set(options['maxDepth'])
+            """Set dialog values from options dictionary."""
+            titleEntry.delete(0, tk.END)
+            titleEntry.insert(0, options['title'])
+            max_doc_depth = self.display.doc.max_depth()
+            if options['maxDepth'] <= max_doc_depth:
+                depthVar.set(options['maxDepth'])
             else:
-                intVardepth.set(self.display.doc.max_depth())
+                depthVar.set(max_doc_depth)
 
         def getDefaults():
-            options=self.display.gettocdefaultOptions()
+            """Get and save default options."""
+            options = self.display.gettocdefaultOptions()
             self.display.savetocOptions(options)
             return options
 
-
         def addTOC():
+            """Create TOC with current options."""
             self.display.updatestatusBar('Making TOC...')
             if write_toc(self.display.doc, getOptions(), self.display):
-                onClosing()
+                self.onClosing()
                 self.display.setPage(0)
                 self.display.updatestatusBar('Finished TOC.')
 
         def removeTOC():
-            options={}
-            options['pgRange']=e1.get()
+            """Remove existing TOC from document."""
+            options = {'pgRange': titleEntry.get()}
             self.display.updatestatusBar('Removing TOC...')
             if delete_toc(self.display.doc, options, self.display):
-                onClosing()
+                self.onClosing()
                 self.display.setPgDisplay()
                 self.display.updatestatusBar('Finished removing TOC.')
 
-        self.title('Table of Contents')
-        self.attributes('-topmost', True)
+        # Title input
+        titleFrame = tk.Frame(self)
+        titleFrame.pack(fill=tk.X, padx=5)
+        tk.Label(titleFrame, text='Title:').pack(side=tk.LEFT, padx=5, pady=5)
+        titleEntry = tk.Entry(titleFrame)
+        titleEntry.pack(side=tk.LEFT, fill=tk.X, expand=1, pady=5)
 
-        f1=tk.Frame(self)
-        f1.pack(fill=tk.X, padx=5)
+        # Depth selection
+        depthFrame = tk.Frame(self)
+        depthFrame.pack(fill=tk.X, padx=5)
+        tk.Label(depthFrame, text='Depth:').pack(side=tk.LEFT, padx=5, pady=5)
+        depthVar = tk.IntVar()
+        depthChoices = list(range(1, self.display.doc.max_depth() + 1))
+        depthOption = tk.OptionMenu(depthFrame, depthVar, *depthChoices)
+        depthOption.pack(side=tk.LEFT, fill=tk.X, expand=1, pady=5)
 
-        l1=tk.Label(f1,text='Title:')
-        l1.pack(side=tk.LEFT,padx=5,pady=5)
-        e1=tk.Entry(f1)
-        e1.pack(side=tk.LEFT, fill=tk.X, expand=1,pady=5)
-
-
-        f2=tk.Frame(self)
-        f2.pack(fill=tk.X, padx=5)
-        l1=tk.Label(f2,text='Depth:')
-        l1.pack(side=tk.LEFT,padx=5,pady=5)
-        intVardepth=tk.IntVar()
-        depthChoices = [x for x in range(1,self.display.doc.max_depth()+1)]
-        depthOption = tk.OptionMenu(f2, intVardepth, *depthChoices)
-        depthOption.pack(side=tk.LEFT, fill=tk.X, expand=1,pady=5)
-
-        f3=tk.Frame(self)
-        f3.pack(fill=tk.X, padx=5, pady=5)
-        okButton=tk.Button(f3,text='Add TOC', command=addTOC)
+        # Buttons
+        buttonFrame = tk.Frame(self)
+        buttonFrame.pack(fill=tk.X, padx=5, pady=5)
+        okButton = tk.Button(buttonFrame, text='Add TOC', command=addTOC)
         okButton.pack(side=tk.RIGHT)
-        removeButton = tk.Button(f3, text='Remove TOC', command=removeTOC)
+        removeButton = tk.Button(buttonFrame, text='Remove TOC', command=removeTOC)
         removeButton.pack(side=tk.RIGHT)
+        tk.Button(buttonFrame, text='Cancel', command=self.onClosing).pack(side=tk.RIGHT)
 
-        cancelButton=tk.Button(f3,text='Cancel', command=onClosing)
-        cancelButton.pack(side=tk.RIGHT)
-
-        options=self.display.gettocOptions()
-        if not options: options=getDefaults()
+        # Load saved options
+        options = self.display.gettocOptions()
+        if not options:
+            options = getDefaults()
         setOptions(options)
-        buttons()
-
-
-        self.bind('<Key-Escape>', lambda i: onEscape(i))
-        self.protocol('WM_DELETE_WINDOW', onClosing)
-
-
-
-
-
+        updateButtons()

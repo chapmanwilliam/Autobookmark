@@ -101,7 +101,7 @@ class FrameMain(wx.Frame):
         pass
 
     def test(self, evt):
-        print('paint event')
+        pass  # Paint event handler
 
     # Virtual event handlers, overide them in your derived class
     def gui_panel_background(self, event):

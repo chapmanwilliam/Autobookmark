@@ -1,11 +1,19 @@
+"""
+Display.py - Main PDF viewer component using Tkinter.
+
+Provides the primary PDF display interface with page navigation, zoom controls,
+annotations, text selection, and integration with bookmark/chronology trees.
+Handles user interactions for viewing and editing PDF documents.
+"""
+
 import os
 import ocrmypdf
 import time
 import sys
 import fitz
-from utilities import get_colour, get_style, annot_name,verticestoQuads
-import dateparser
 import webbrowser
+
+from utilities import get_colour, get_style, annot_name, verticestoQuads
 from tocDialog import tocDialog
 from hyperlinkDialog import hyperlinkDialog
 from rotateDialog import rotateDialog
@@ -15,7 +23,6 @@ import wwc_paginatepdf as PG
 import wwc_hyperlinkpagerefs as HP
 import wwc_AutoBookmarker as AB
 import wwc_TOC as TC
-import wwc_paginatepdf as PG
 from wwc_gui_config import clockwise_location, anticlockwise_location, chrono_location, documents_location, bookmark_tab_location, delete_location, target_location, print_location, asterisk_location, order_location, link_location, book_location, table_location, search_location, left_location, right_location, settings_location, open_location, save_location, close_location, bookmark_location, CreateToolTip
 from RubberBand import rubberBand
 from wwc_parsebookmark import getdatefromText, getdatefromNode, gettextfromText, gettextpartDate, isValidDate, getdayofWeek
@@ -95,9 +102,6 @@ class display():
         self.pageHistoryIndex=0 #where we are in pageHistory
         self.docHistory=[None] #an array for doc history
         self.docHistoryIndex=0 #where we are in docHistory
-
-
-        print(openFiles)
 
 
         #Bindings
@@ -193,7 +197,6 @@ class display():
         self.openFile()
 
     def ControlP(self,event):
-        print('printing')
         self.printPDF()
 
     def ControlS(self,event):
@@ -220,7 +223,6 @@ class display():
 
     def reset(self):
         openFiles[self.id] = {'filepath': self.filepath, 'class': self}
-        print('got here')
         try:
             if self.doc:
                 self.doc.add_default_label()
@@ -272,12 +274,10 @@ class display():
 
     def merge(self):
         options = self.loadOptions()
-        filepath=mergeDialog(self.displayWindow,self.doc,options).show()
-        print(filepath)
-        if not filepath=="":
-            newCl=display(tk.Toplevel(),filepath)
-            openFiles[newCl.id]={'filepath': filepath, 'class': newCl}
-        print(openFiles)
+        filepath = mergeDialog(self.displayWindow, self.doc, options).show()
+        if filepath:
+            newCl = display(tk.Toplevel(), filepath)
+            openFiles[newCl.id] = {'filepath': filepath, 'class': newCl}
 
 
     def openlastFile(self, options):

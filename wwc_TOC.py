@@ -1,17 +1,15 @@
 # coding=latin-1
+"""
+wwc_TOC.py - Table of Contents generation and management.
+
+Handles creation, deletion, and manipulation of Table of Contents pages
+in PDF documents. Generates TOC pages with hyperlinks to bookmarks.
+"""
+
 import fitz
 from pathlib import Path
-from utilities import openFile, getUniqueFileName
 
-
-def max_depth(doc):
-    # returns max-depth of bookmarks
-    toc = doc.get_toc()
-    max_depth = 0
-    for t in toc:
-        level = t[0]
-        if level > max_depth: max_depth = level
-    return max_depth
+from utilities import openFile, getUniqueFileName, max_depth
 
 
 def isTOC(doc, display=None):

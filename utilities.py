@@ -1,20 +1,31 @@
+"""
+utilities.py - Shared utility functions for PDF manipulation and UI helpers.
+
+Provides color handling, file operations, annotation management, text selection,
+and various helper functions used across the Autobookmark application.
+"""
+
 import webcolors
 import fitz
 from fitz.utils import rule_dict
 from tkinter import messagebox
-import platform, subprocess,os
+import platform
+import subprocess
+import os
 from pathlib import Path
+
 from wwc_page_labels import getpgLabelMapping
 
 
-annot_name='Chapman_'
+# Annotation identifier prefix for tracking annotations created by this application
+annot_name = 'Chapman_'
 
 
 def named_destinations_from_page_labels(doc):
-    dict, arr_labels = getpgLabelMapping(doc)  # dict is dictionary of labels return tuple of pages, arr_labels is list of page labels in page order
-    for d in dict:
+    """Create named destinations from page labels for PDF navigation."""
+    label_dict, arr_labels = getpgLabelMapping(doc)
+    for d in label_dict:
         p = d['page'][0]
-        print(d,p)
 
 def showInFolder(filepath):
 
@@ -38,21 +49,13 @@ def openFile(filepath):
 
 
 def getUniqueFileName(f):
-    #returns unique file name
-    count=1
-    c=f
+    """Return a unique file name by appending a number if file already exists."""
+    count = 1
+    c = f
     while Path(c).is_file():
-        c=f.parent.joinpath(f.stem+' '+str(count)+f.suffix)
-        count+=1
+        c = f.parent.joinpath(f.stem + ' ' + str(count) + f.suffix)
+        count += 1
     return c
-
-def openFile(filepath):
-    if platform.system() == 'Darwin':  # macOS
-        subprocess.call(('open', filepath))
-    elif platform.system() == 'Windows':  # Windows
-        os.startfile(filepath)
-    else:  # linux variants
-        subprocess.call(('xdg-open', filepath))
 
 
 def closest_colour(requested_colour):
@@ -389,108 +392,64 @@ def select(page, startPoint, endPoint):
     return None
 
 def getselectSpans(page, startPoint, endPoint):
+    """
+    Get text spans between two points on a page for text selection.
 
-    def intersect(A,B):
-        #returns True if rect A intersects rect B
-        right=min(A.br.x, B.br.x)
-        left=max(A.bl.x, B.bl.x)
-        left=min(left,right)
-        bottom=min(A.br.y,B.br.y)
-        top=max(A.tr.y,B.tr.y)
-        top=min(bottom,top)
-        newrect=fitz.Rect(left,top,right,bottom)
-        if newrect.width * newrect.height==0:
-            return False
-        return True
+    Args:
+        page: The PDF page object
+        startPoint: Starting point of selection
+        endPoint: Ending point of selection
+
+    Returns:
+        List of span dictionaries containing selected text
+    """
+    def intersect(A, B):
+        """Return True if rect A intersects rect B."""
+        right = min(A.br.x, B.br.x)
+        left = max(A.bl.x, B.bl.x)
+        left = min(left, right)
+        bottom = min(A.br.y, B.br.y)
+        top = max(A.tr.y, B.tr.y)
+        top = min(bottom, top)
+        newrect = fitz.Rect(left, top, right, bottom)
+        return newrect.width * newrect.height != 0
 
     def heightSpan(span):
-        r=fitz.Rect(span['bbox'])
+        """Return the height of a text span."""
+        r = fitz.Rect(span['bbox'])
         return r.height
 
-    def inRectsBits(A,C,D):
-        #returns true if
-        #A intersects with any B, C, or D
-        #A.tl in rect D
-        mp=fitz.Point(A.bl.x+A.width/2, A.tl.y+A.height/2)
-        if mp in C or mp in D:
-            return True
-        return False
-        if intersect(A,C) or intersect(A,D): return True
-        return False
+    def inRectsBits(A, C, D):
+        """Return True if midpoint of rect A is in rect C or D."""
+        mp = fitz.Point(A.bl.x + A.width / 2, A.tl.y + A.height / 2)
+        return mp in C or mp in D
 
-    sp=[]
+    sp = []
     pageRect = page.rect
-    B = fitz.Rect(pageRect[0], startPoint.y, pageRect[2], endPoint.y) #big rect
+    B = fitz.Rect(pageRect[0], startPoint.y, pageRect[2], endPoint.y)
 
-    dict=page.get_text('rawdict')
-    blocks = [b for b in dict['blocks'] if b['type'] == 0 and intersect(fitz.Rect(b['bbox']),B)]
+    text_dict = page.get_text('rawdict')
+    blocks = [b for b in text_dict['blocks'] if b['type'] == 0 and intersect(fitz.Rect(b['bbox']), B)]
     for block in blocks:
-        lines=[l for l in block['lines'] if intersect(fitz.Rect(l['bbox']),B)]
+        lines = [l for l in block['lines'] if intersect(fitz.Rect(l['bbox']), B)]
         for line in lines:
-            spans=[s for s in line['spans'] if intersect(fitz.Rect(s['bbox']),B)]
+            spans = [s for s in line['spans'] if intersect(fitz.Rect(s['bbox']), B)]
             sp.extend(spans)
-    if sp:
-        height1=heightSpan(sp[0])
-        height2=heightSpan(sp[-1])
-        B = fitz.Rect(pageRect[0], startPoint.y+height1, pageRect[2], max(startPoint.y+height1,endPoint.y-height2))  # big rect
 
+    if sp:
+        height1 = heightSpan(sp[0])
+        height2 = heightSpan(sp[-1])
+        B = fitz.Rect(pageRect[0], startPoint.y + height1, pageRect[2],
+                      max(startPoint.y + height1, endPoint.y - height2))
         C = fitz.Rect(0, 0, startPoint.x, startPoint.y)
         D = fitz.Rect(endPoint.x, endPoint.y, pageRect[2], pageRect[3])
 
-#        C=fitz.Rect(startPoint.x,startPoint.y, pageRect[2],startPoint.y+height1) #top rect
-#        D=fitz.Rect(pageRect[0],endPoint.y-height2, endPoint.x,endPoint.y) #bottom  rect
-
-        chars=[]
         for s in sp:
-            chars.extend([c for c in s['chars'] if not inRectsBits(fitz.Rect(c['bbox']),C,D)])
-        print(''.join([c['c'] for c in chars]))
+            # Filter characters not in excluded regions
+            s['chars'] = [c for c in s['chars'] if not inRectsBits(fitz.Rect(c['bbox']), C, D)]
 
     return sp
 
-    lines=[]
-    spans = []
-    if not startPoint or not endPoint: return spans
-    pageRect = page.rect
-    bigrect = fitz.Rect(pageRect[0], startPoint.y, pageRect[2], endPoint.y)
-    cutoutrect1=fitz.Rect(0,0,startPoint.x,startPoint.y)
-    cutoutrect2=fitz.Rect(endPoint.x,endPoint.y,pageRect[2],pageRect[3])
-    dict = page.getText('rawdict')
-    blocks = [b for b in dict['blocks'] if b['type'] == 0]
-    for block in blocks:
-        ls=[l for l in block['lines'] if fitz.Point(fitz.Rect(l['bbox']).tl) in bigrect and fitz.Point(fitz.Rect(l['bbox']).br) in bigrect and not (fitz.Point(fitz.Rect(l['bbox']).tr) in cutoutrect1 or fitz.Point(fitz.Rect(l['bbox']).bl) in cutoutrect2)]
-        lines.extend(ls)
-        for line in lines:
-            sp = [s for s in line['spans'] if fitz.Point(fitz.Rect(s['bbox']).tl) in bigrect and fitz.Point(fitz.Rect(s['bbox']).br) in bigrect and not (fitz.Point(fitz.Rect(s['bbox']).tr) in cutoutrect1 or fitz.Point(fitz.Rect(s['bbox']).bl) in cutoutrect2)]
-            line['spans']=sp
-#            spans.extend(sp)
-    #Deal with first and last lines
-    if len(lines)>0:
-        #first line
-        for span in lines[0]['spans']:
-            chars=[c for c in span['chars'] if c['bbox'][0] > startPoint.x-0.1]
-            span['chars']=chars
-            print(''.join([c['c'] for c in chars]))
-            if len(chars)>0:
-                rect=fitz.Rect(span['bbox'])
-                rect[0]=fitz.Point(fitz.Rect(chars[0]['bbox']).tl).x
-                rect[1]=fitz.Point(fitz.Rect(chars[0]['bbox']).tl).y
-                span['bbox']=rect[:4]
-                lines[0]['span']=span
-        #last line
-        for span in lines[-1]['spans']:
-            chars=[c for c in span['chars'] if c['bbox'][2] < endPoint.x+0.1]
-            span['chars']=chars
-            print(''.join([c['c'] for c in chars]))
-            if len(chars)>0:
-                rect=fitz.Rect(span['bbox'])
-                rect[2]=fitz.Point(fitz.Rect(chars[-1]['bbox']).br).x
-                rect[3]=fitz.Point(fitz.Rect(chars[-1]['bbox']).br).y
-                span['bbox']=rect[:4]
-                lines[-1]['span']=span
-    for line in lines:
-        for span in line['spans']:
-            if span['chars']: spans.append(span)
-    return spans
 
 def verticestoQuads(vertices):
     quads = []

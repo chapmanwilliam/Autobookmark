@@ -1,96 +1,82 @@
+"""
+rotateDialog.py - Page rotation configuration dialog.
+
+Allows users to rotate PDF pages by 90 or 180 degrees, either for all pages
+or a specific page range.
+"""
+
 import tkinter as tk
 
-class rotateDialog(tk.Toplevel):
+from baseDialog import BaseDialog
+
+
+class rotateDialog(BaseDialog):
+    """Dialog for rotating PDF pages."""
 
     def __init__(self, parent, display, pgRange=None):
-        tk.Toplevel.__init__(self, parent)
-        self.parent=parent
-        self.display=display
-        self.pgRange=pgRange
-
-        self.displayDialog()
-
-
-
+        super().__init__(parent, display, title="Rotation", pgRange=pgRange)
 
     def displayDialog(self):
-
-        def onClosing():
-            print('closing')
-            self.display.updatestatusBar("")
-            self.destroy()
-
-        def onEscape(i):
-            onClosing()
-
         def rotate():
-            if v.get()==2:
-                #check page range
-                if not self.display.doc.parse_page_string(e1.get()): return
+            """Apply rotation to selected pages."""
+            if pageRangeVar.get() == 2:
+                if not self.display.doc.parse_page_string(rangeEntry.get()):
+                    return
+
             self.display.updatestatusBar('Rotating...')
-            if textVarDegrees.get()=="Counterclockwise 90 degrees":
-                degrees=-90
-            if textVarDegrees.get()=="Clockwise 90 degrees":
-                degrees=90
-            if textVarDegrees.get()=="180 degrees":
-                degrees=180
-            if v.get()==1:
+
+            # Map selection to degrees
+            rotation_map = {
+                "Counterclockwise 90 degrees": -90,
+                "Clockwise 90 degrees": 90,
+                "180 degrees": 180
+            }
+            degrees = rotation_map.get(directionVar.get(), -90)
+
+            if pageRangeVar.get() == 1:
                 self.display.rotate(degrees)
             else:
-                self.display.rotate(degrees, pgRange=e1.get())
+                self.display.rotate(degrees, pgRange=rangeEntry.get())
+
             self.display.updatestatusBar('Finished rotating.')
-            onClosing()
+            self.onClosing()
 
-        def showChoice():
-            if v.get()==1:
-                e1.configure(state='disabled')
+        def updateRangeState():
+            """Enable/disable range entry based on selection."""
+            if pageRangeVar.get() == 1:
+                rangeEntry.configure(state='disabled')
             else:
-                e1.configure(state='normal')
+                rangeEntry.configure(state='normal')
 
-        self.title('Rotation')
-        self.attributes('-topmost', True)
+        # Direction selection
+        dirFrame = tk.Frame(self)
+        dirFrame.pack(fill=tk.X, padx=5)
+        tk.Label(dirFrame, text='Direction:').pack(side=tk.LEFT, padx=5, pady=5)
+        directionVar = tk.StringVar(value='Counterclockwise 90 degrees')
+        rotationChoices = ['Counterclockwise 90 degrees', 'Clockwise 90 degrees', '180 degrees']
+        tk.OptionMenu(dirFrame, directionVar, *rotationChoices).pack(
+            side=tk.LEFT, fill=tk.X, expand=1, pady=5)
 
-        f2=tk.Frame(self)
-        f2.pack(fill=tk.X, padx=5)
-        l1=tk.Label(f2,text='Direction:')
-        l1.pack(side=tk.LEFT,padx=5,pady=5)
-        textVarDegrees=tk.StringVar()
-        textVarDegrees.set('Counterclockwise 90 degrees')
-        rotationChoices = ['Counterclockwise 90 degrees', 'Clockwise 90 degress', '180 degrees']
-        rotationOption = tk.OptionMenu(f2, textVarDegrees, *rotationChoices)
-        rotationOption.pack(side=tk.LEFT, fill=tk.X, expand=1,pady=5)
+        # Page range selection
+        rangeFrame = tk.LabelFrame(self, text='Page range')
+        rangeFrame.pack(fill=tk.X, padx=5)
+        pageRangeVar = tk.IntVar(value=1)
+        tk.Radiobutton(rangeFrame, text='All', variable=pageRangeVar,
+                       value=1, command=updateRangeState).pack(anchor=tk.W, padx=5, pady=5)
+        tk.Radiobutton(rangeFrame, text='Page range:', variable=pageRangeVar,
+                       value=2, command=updateRangeState).pack(side=tk.LEFT, padx=5, pady=5)
+        rangeEntry = tk.Entry(rangeFrame)
+        rangeEntry.pack(side=tk.LEFT, fill=tk.X, expand=1, pady=5)
 
+        # Pre-fill page range if provided
+        if self.pgRange:
+            rangeEntry.delete(0, tk.END)
+            rangeEntry.insert(0, self.pgRange)
 
-        f0=tk.LabelFrame(self, text='Page range')
-        f0.pack(fill=tk.X, padx=5)
+        # Buttons
+        buttonFrame = tk.Frame(self)
+        buttonFrame.pack(fill=tk.X, padx=5, pady=5)
+        tk.Button(buttonFrame, text='Rotate', command=rotate).pack(side=tk.RIGHT)
+        tk.Button(buttonFrame, text='Cancel', command=self.onClosing).pack(side=tk.RIGHT)
 
-        v=tk.IntVar()
-        tk.Radiobutton(f0,text='All',variable=v,value=1, command=showChoice).pack(anchor=tk.W,padx=5,pady=5)
-        tk.Radiobutton(f0,text='Page range:',variable=v,value=2, command=showChoice).pack(side=tk.LEFT,padx=5,pady=5)
-
-        e1=tk.Entry(f0)
-        e1.pack(side=tk.LEFT, fill=tk.X, expand=1,pady=5)
-
-        if self.pgRange: #set pgRange if supplied
-            e1.delete(0,tk.END)
-            e1.insert(0,self.pgRange)
-
-
-        f3=tk.Frame(self)
-        f3.pack(fill=tk.X, padx=5, pady=5)
-        okButton=tk.Button(f3,text='Rotate', command=rotate)
-        okButton.pack(side=tk.RIGHT)
-
-        cancelButton=tk.Button(f3,text='Cancel', command=onClosing)
-        cancelButton.pack(side=tk.RIGHT)
-
-        v.set(1)
-        showChoice()
-
-        self.bind('<Key-Escape>', lambda i: onEscape(i))
-        self.protocol('WM_DELETE_WINDOW', onClosing)
-
-
-
-
-
+        updateRangeState()

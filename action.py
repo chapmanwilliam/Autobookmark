@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+action.py - Main action dispatcher for PDF processing queue.
+
+Handles batch processing of PDF files dropped onto the application,
+managing the queue communication between the GUI and the processing engine.
+Filters for PDF files and tracks progress through the queue.
+"""
+
 import time
 
 from wwc_AutoBookmarker import externalDrop

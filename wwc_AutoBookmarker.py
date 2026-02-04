@@ -1,3 +1,16 @@
+"""
+wwc_AutoBookmarker.py - Core PDF bookmarking engine.
+
+This is the primary module for automatic bookmark creation and date extraction
+from PDF documents. It provides functionality to:
+- Extract text from PDF pages using multiple methods (PyMuPDF, pdfminer)
+- Parse and recognize dates in 14+ different formats (patterns A-N)
+- Create structured bookmark hierarchies based on document content
+- Generate chronological orderings of document sections
+
+The module supports both interactive (GUI) and batch processing modes.
+"""
+
 from __future__ import absolute_import
 from __future__ import print_function
 import collections
@@ -9,11 +22,15 @@ import sys
 from itertools import cycle
 from typing import Dict
 
-from wwc_parsebookmark import getdatefromText, getdatefromNode, gettextpartDate, gettextfromText, gettextpartDate, isValidDate, getdayofWeek, getAge, remove_time
+from wwc_parsebookmark import (
+    getdatefromText, getdatefromNode, gettextpartDate, gettextfromText,
+    isValidDate, getdayofWeek, getAge, remove_time
+)
 
 import fitz  # pip install pymupdf
 import unidecode
 import wwc_parser as dparser
+from wwc_parser import tidy_generally
 from PyPDF2 import PdfReader
 from PyPDF2.generic import AnnotationBuilder
 from pdfminer.converter import PDFPageAggregator
@@ -690,17 +707,6 @@ def is_same_line(a):
 
 def train():
     print_results(combine_labels_chunks())
-
-
-def tidy_generally(txt):
-    txt = re.sub(r' +', " ", txt)  # remove double spaces
-    txt = txt.strip(' \n')  # strip leading and trailing spaces
-    txt = txt.replace('\n', "")  # remove new line
-    txt = txt.replace('\t', " ")  # remove tabs and replace with space
-    txt = txt.replace("\'", "")  # remove '
-    txt = re.sub(r'(\d) *: *(\d)', r"\1:\2",
-                 txt)  # remove space(s) before and after colon and number
-    return txt
 
 
 def l_in_ls(chunk, list_of_locs, LMR):
