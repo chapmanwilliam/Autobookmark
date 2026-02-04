@@ -5,3 +5,8 @@
 /buildPCWidget/
 /buildMacDisplay/
 /buildMacWidget/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
