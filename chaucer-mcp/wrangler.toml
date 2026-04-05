@@ -1,0 +1,16 @@
+name = "chaucer-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-04-05"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[durable_objects]
+bindings = [
+  { name = "CHAUCER_MCP", class_name = "ChaucerMCP" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ChaucerMCP"]

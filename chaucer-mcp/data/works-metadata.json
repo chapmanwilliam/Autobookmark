@@ -1,0 +1,154 @@
+{
+  "works": [
+    {
+      "id": "ct",
+      "title": "The Canterbury Tales",
+      "abbreviation": "CT",
+      "sections": [
+        { "id": "ct-frag1", "title": "Fragment I", "fragment": "I", "tales": [
+          { "id": "ct-gp", "tale": "GP", "title": "General Prologue", "lineRange": [1, 858] },
+          { "id": "ct-knt", "tale": "KnT", "title": "The Knight's Tale", "lineRange": [859, 2482] },
+          { "id": "ct-milt", "tale": "MilT", "title": "The Miller's Tale", "lineRange": [3187, 3854] },
+          { "id": "ct-rvt", "tale": "RvT", "title": "The Reeve's Tale", "lineRange": [3921, 4324] },
+          { "id": "ct-ckt", "tale": "CkT", "title": "The Cook's Tale", "lineRange": [4365, 4422] }
+        ]},
+        { "id": "ct-frag2", "title": "Fragment II", "fragment": "II", "tales": [
+          { "id": "ct-mlt", "tale": "MLT", "title": "The Man of Law's Tale", "lineRange": [1, 1190] }
+        ]},
+        { "id": "ct-frag3", "title": "Fragment III", "fragment": "III", "tales": [
+          { "id": "ct-wbp", "tale": "WBP", "title": "The Wife of Bath's Prologue", "lineRange": [1, 856] },
+          { "id": "ct-wbt", "tale": "WBT", "title": "The Wife of Bath's Tale", "lineRange": [857, 1264] },
+          { "id": "ct-frt", "tale": "FrT", "title": "The Friar's Tale", "lineRange": [1265, 1664] },
+          { "id": "ct-sumt", "tale": "SumT", "title": "The Summoner's Tale", "lineRange": [1665, 2294] }
+        ]},
+        { "id": "ct-frag4", "title": "Fragment IV", "fragment": "IV", "tales": [
+          { "id": "ct-clt", "tale": "ClT", "title": "The Clerk's Tale", "lineRange": [1, 1212] },
+          { "id": "ct-mert", "tale": "MerT", "title": "The Merchant's Tale", "lineRange": [1213, 2418] }
+        ]},
+        { "id": "ct-frag5", "title": "Fragment V", "fragment": "V", "tales": [
+          { "id": "ct-sqt", "tale": "SqT", "title": "The Squire's Tale", "lineRange": [1, 672] },
+          { "id": "ct-frant", "tale": "FranT", "title": "The Franklin's Tale", "lineRange": [673, 1624] }
+        ]},
+        { "id": "ct-frag6", "title": "Fragment VI", "fragment": "VI", "tales": [
+          { "id": "ct-pardt", "tale": "PardT", "title": "The Pardoner's Tale", "lineRange": [287, 968] }
+        ]},
+        { "id": "ct-frag7", "title": "Fragment VII", "fragment": "VII", "tales": [
+          { "id": "ct-sht", "tale": "ShT", "title": "The Shipman's Tale", "lineRange": [1, 434] },
+          { "id": "ct-prt", "tale": "PrT", "title": "The Prioress's Tale", "lineRange": [435, 690] },
+          { "id": "ct-thop", "tale": "Thop", "title": "Sir Thopas", "lineRange": [691, 918] },
+          { "id": "ct-mel", "tale": "Mel", "title": "The Tale of Melibee", "lineRange": [967, 1888] },
+          { "id": "ct-mkt", "tale": "MkT", "title": "The Monk's Tale", "lineRange": [1889, 2766] },
+          { "id": "ct-npt", "tale": "NPT", "title": "The Nun's Priest's Tale", "lineRange": [2767, 3446] }
+        ]},
+        { "id": "ct-frag8", "title": "Fragment VIII", "fragment": "VIII", "tales": [
+          { "id": "ct-snt", "tale": "SNT", "title": "The Second Nun's Tale", "lineRange": [1, 434] },
+          { "id": "ct-cyt", "tale": "CYT", "title": "The Canon's Yeoman's Tale", "lineRange": [554, 1481] }
+        ]},
+        { "id": "ct-frag9", "title": "Fragment IX", "fragment": "IX", "tales": [
+          { "id": "ct-mant", "tale": "ManT", "title": "The Manciple's Tale", "lineRange": [1, 362] }
+        ]},
+        { "id": "ct-frag10", "title": "Fragment X", "fragment": "X", "tales": [
+          { "id": "ct-parst", "tale": "ParsT", "title": "The Parson's Tale", "lineRange": [1, 1080] },
+          { "id": "ct-ret", "tale": "Ret", "title": "Chaucer's Retraction", "lineRange": [1081, 1092] }
+        ]}
+      ]
+    },
+    {
+      "id": "troilus",
+      "title": "Troilus and Criseyde",
+      "abbreviation": "Tr",
+      "sections": [
+        { "id": "tr-book1", "title": "Book I", "book": "I" },
+        { "id": "tr-book2", "title": "Book II", "book": "II" },
+        { "id": "tr-book3", "title": "Book III", "book": "III" },
+        { "id": "tr-book4", "title": "Book IV", "book": "IV" },
+        { "id": "tr-book5", "title": "Book V", "book": "V" }
+      ]
+    },
+    {
+      "id": "bd",
+      "title": "The Book of the Duchess",
+      "abbreviation": "BD",
+      "sections": [
+        { "id": "bd-main", "title": "The Book of the Duchess" }
+      ]
+    },
+    {
+      "id": "hf",
+      "title": "The House of Fame",
+      "abbreviation": "HF",
+      "sections": [
+        { "id": "hf-book1", "title": "Book I", "book": "I" },
+        { "id": "hf-book2", "title": "Book II", "book": "II" },
+        { "id": "hf-book3", "title": "Book III", "book": "III" }
+      ]
+    },
+    {
+      "id": "pf",
+      "title": "The Parliament of Fowls",
+      "abbreviation": "PF",
+      "sections": [
+        { "id": "pf-main", "title": "The Parliament of Fowls" }
+      ]
+    },
+    {
+      "id": "lgw",
+      "title": "The Legend of Good Women",
+      "abbreviation": "LGW",
+      "sections": [
+        { "id": "lgw-prol", "title": "Prologue" },
+        { "id": "lgw-main", "title": "The Legends" }
+      ]
+    },
+    {
+      "id": "boece",
+      "title": "Boece",
+      "abbreviation": "Bo",
+      "sections": [
+        { "id": "bo-main", "title": "Boece" }
+      ]
+    },
+    {
+      "id": "astr",
+      "title": "A Treatise on the Astrolabe",
+      "abbreviation": "Astr",
+      "sections": [
+        { "id": "astr-main", "title": "A Treatise on the Astrolabe" }
+      ]
+    },
+    {
+      "id": "short-poems",
+      "title": "Short Poems",
+      "abbreviation": "SP",
+      "sections": []
+    }
+  ],
+  "taleAbbreviations": {
+    "GP":    { "title": "General Prologue",          "fragment": "I",    "lineRange": [1, 858] },
+    "KnT":   { "title": "The Knight's Tale",          "fragment": "I",    "lineRange": [859, 2482] },
+    "MilT":  { "title": "The Miller's Tale",           "fragment": "I",    "lineRange": [3187, 3854] },
+    "RvT":   { "title": "The Reeve's Tale",            "fragment": "I",    "lineRange": [3921, 4324] },
+    "CkT":   { "title": "The Cook's Tale",             "fragment": "I",    "lineRange": [4365, 4422] },
+    "MLT":   { "title": "The Man of Law's Tale",       "fragment": "II",   "lineRange": [1, 1190] },
+    "WBP":   { "title": "Wife of Bath's Prologue",     "fragment": "III",  "lineRange": [1, 856] },
+    "WBT":   { "title": "The Wife of Bath's Tale",     "fragment": "III",  "lineRange": [857, 1264] },
+    "FrT":   { "title": "The Friar's Tale",            "fragment": "III",  "lineRange": [1265, 1664] },
+    "SumT":  { "title": "The Summoner's Tale",         "fragment": "III",  "lineRange": [1665, 2294] },
+    "ClT":   { "title": "The Clerk's Tale",            "fragment": "IV",   "lineRange": [1, 1212] },
+    "MerT":  { "title": "The Merchant's Tale",         "fragment": "IV",   "lineRange": [1213, 2418] },
+    "SqT":   { "title": "The Squire's Tale",           "fragment": "V",    "lineRange": [1, 672] },
+    "FranT": { "title": "The Franklin's Tale",         "fragment": "V",    "lineRange": [673, 1624] },
+    "PardT": { "title": "The Pardoner's Tale",         "fragment": "VI",   "lineRange": [287, 968] },
+    "ShT":   { "title": "The Shipman's Tale",          "fragment": "VII",  "lineRange": [1, 434] },
+    "PrT":   { "title": "The Prioress's Tale",         "fragment": "VII",  "lineRange": [435, 690] },
+    "Thop":  { "title": "Sir Thopas",                  "fragment": "VII",  "lineRange": [691, 918] },
+    "Mel":   { "title": "The Tale of Melibee",         "fragment": "VII",  "lineRange": [967, 1888] },
+    "MkT":   { "title": "The Monk's Tale",             "fragment": "VII",  "lineRange": [1889, 2766] },
+    "NPT":   { "title": "The Nun's Priest's Tale",     "fragment": "VII",  "lineRange": [2767, 3446] },
+    "SNT":   { "title": "The Second Nun's Tale",       "fragment": "VIII", "lineRange": [1, 434] },
+    "CYT":   { "title": "The Canon's Yeoman's Tale",   "fragment": "VIII", "lineRange": [554, 1481] },
+    "ManT":  { "title": "The Manciple's Tale",         "fragment": "IX",   "lineRange": [1, 362] },
+    "ParsT": { "title": "The Parson's Tale",           "fragment": "X",    "lineRange": [1, 1080] },
+    "Ret":   { "title": "Chaucer's Retraction",        "fragment": "X",    "lineRange": [1081, 1092] }
+  }
+}
