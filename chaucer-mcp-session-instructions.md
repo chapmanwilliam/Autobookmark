@@ -1,50 +1,91 @@
 # Chaucer MCP — New Session Instructions
 
-The Chaucer MCP server code already exists on a branch in `chapmanwilliam/Autobookmark` at `claude/chaucer-mcp-server-VsQ5o`, inside the `chaucer-mcp/` subdirectory. Your job is to:
+You are working in the `chapmanwilliam/Chaucer-MCP` repo. A branch `claude/port-chaucer-mcp-W7...` already exists with the Phase 1 & 2 code ported from `chapmanwilliam/Autobookmark`. The Riverside Chaucer PDF is already committed at the repo root as `The Riverside Chaucer.pdf`.
 
-## 1. Port the code to this repo
+## Goal
 
-Pull the files from `chapmanwilliam/Autobookmark` branch `claude/chaucer-mcp-server-VsQ5o`, subdirectory `chaucer-mcp/`. Move everything up to the root of this repo (so `src/`, `scripts/`, `data/`, `wrangler.toml`, etc. are at the top level, not nested).
+Continue building the Chaucer MCP server. Deploy to Cloudflare Workers at `chaucer-mcp.wchapman10.workers.dev`, freely available to anyone with the URL (no auth — this is Cloudflare Workers default behavior, just don't add auth middleware).
 
-You can fetch the files via the GitHub MCP tools (`get_file_contents`) or `git clone`.
+## 1. Check out the existing branch
 
-Key files to port:
-- `src/index.ts` — Worker entry + MCP server (Durable Object)
-- `src/tools/{search,passage,works,context}.ts` — MCP tool implementations
-- `src/parser/reference-parser.ts` — Flexible Chaucer reference parser
-- `src/types.ts` — TypeScript interfaces
-- `scripts/parse-chaucer.ts` — PDF→JSON extraction script
-- `scripts/build-index.ts` — Inverted index builder
-- `data/works-metadata.json` — Static metadata (all CT fragments/tales with line ranges)
-- `package.json`, `package-lock.json`, `tsconfig.json`, `wrangler.toml`, `.gitignore`
-- `CLAUDE.md`, `README.md`
+```bash
+git fetch origin
+git checkout claude/port-chaucer-mcp-W7...   # use the actual full branch name
+npm install
+```
 
-## 2. Download and inspect the PDF
+Verify the project builds:
+```bash
+npx wrangler deploy --dry-run
+```
 
-The source text is the Riverside Chaucer PDF:
-https://www.dropbox.com/scl/fi/p28rgx75bkhclg8rifb2d/The-Riverside-Chaucer.pdf?rlkey=6nep2z77p6irgdvavirotjqu3&st=axnmk40q&dl=1
+## 2. Fix the PDF path
 
-(Append `&dl=1` for direct download.)
+The parse script (`scripts/parse-chaucer.ts`) currently expects the PDF at `riverside-chaucer.pdf`. Update it to point at `The Riverside Chaucer.pdf` at the repo root. Also update `.gitignore` if needed — the PDF IS committed to the repo and should stay that way.
 
-Run `npm run parse -- --inspect` to check text quality on the first 20 pages. Report what you find — this determines feasibility of Phases 3-5.
+## 3. Inspect PDF text quality
 
-## 3. Continue with Phase 3+
+```bash
+npm run parse -- --inspect
+```
 
-If PDF text quality is usable:
-- **Phase 3:** Full text extraction and line number mapping for all works
-- **Phase 4:** Wire up `search_chaucer`, `get_passage`, `get_work` tools to use the parsed data instead of placeholders
-- **Phase 5:** Harden the reference parser to handle all flexible input formats
+This runs the first 20 pages through `pdfjs-dist` and writes `data/pdf-inspection.txt`. **Report what you find** — character counts per page, whether line numbers are detectable, OCR artifacts, etc. This determines feasibility of the remaining phases.
 
-If PDF text quality is poor, document this in CLAUDE.md and consider using plain-text sources from digital humanities projects (Corpus of Middle English, Project Gutenberg, etc.).
+If text quality is poor, document in CLAUDE.md and consider alternatives:
+- [Corpus of Middle English Prose and Verse](https://quod.lib.umich.edu/c/cme/)
+- [The Canterbury Tales Project](https://www.canterburytalesproject.org/)
+- Project Gutenberg plain text
 
-## 4. Deploy
+## 4. Phase 3: Full parse
 
-Deploy to Cloudflare Workers at `chaucer-mcp.wchapman10.workers.dev`. The `wrangler.toml` is already configured.
+Run `npm run parse` to extract all works. The script:
+- Detects work boundaries from headings (`THE CANTERBURY TALES`, `TROILUS AND CRISEYDE`, etc.)
+- Extracts line numbers from margins (printed every 5 lines in Riverside)
+- Interpolates line numbers between known points
+- Maps PDF pages to Riverside printed page numbers
+- Splits CT into fragments and tales using hardcoded line ranges in `CT_FRAGMENTS`
+- Outputs `data/chaucer.json`
+
+Then `npm run build-index` to build the inverted index at `data/index.json`.
+
+Expect the generated files to be large (~10-20 MB). If they exceed the Worker bundle size limit (~10 MB gzipped), split per-work JSON files or move to KV.
+
+## 5. Phase 4: Wire up the tools
+
+Currently `list_works` returns live metadata, but `search_chaucer`, `get_passage`, `get_work`, and `get_context` return placeholder text. Update them to read from `data/chaucer.json` and `data/index.json`:
+
+- **`search_chaucer`**: tokenize query, look up in inverted index, return matches with 2 lines of context before/after and canonical reference strings
+- **`get_passage`**: use `parseReference()` from `src/parser/reference-parser.ts`, then look up lines by work+section+line range
+- **`get_work`**: return all lines for a work/tale, paginated (100 lines per page)
+- **`get_context`**: already partially works via metadata; enhance with actual narrative position if possible
+
+## 6. Phase 5: Harden the reference parser
+
+The parser in `src/parser/reference-parser.ts` handles the main formats but may need more edge cases: lowercase abbreviations, "book" vs "Book", comma/period separators, ranges with en-dashes, etc. Add unit tests if practical.
+
+## 7. Deploy
+
+```bash
+npm run deploy
+```
+
+Should land at `chaucer-mcp.wchapman10.workers.dev`. Test the MCP endpoint at `/sse` with an MCP client.
 
 ## Key context
 
-- The MCP server uses `McpAgent` from `agents/mcp` (Cloudflare's agents framework) with Durable Objects
-- Canterbury Tales are referenced by Fragment (I-X) + line number; Troilus by Book (I-V) + line; other works by simple line number
-- All 26 tale abbreviations (GP, KnT, MilT, etc.) with line ranges are defined in `data/works-metadata.json`
-- The `list_works` tool already returns live metadata; other tools return placeholders saying "run npm run parse"
-- The project builds clean — verified with `wrangler deploy --dry-run` (1MB bundle)
+- **Tech:** Cloudflare Workers + Durable Objects, `McpAgent` from `agents/mcp`, `@modelcontextprotocol/sdk`, TypeScript
+- **Reference system:** Canterbury Tales = Fragment (I-X) + line; Troilus = Book (I-V) + line; other works = simple line number
+- **Tale abbreviations:** All 26 (GP, KnT, MilT, RvT, CkT, MLT, WBP, WBT, FrT, SumT, ClT, MerT, SqT, FranT, PardT, ShT, PrT, Thop, Mel, MkT, NPT, SNT, CYT, ManT, ParsT, Ret) are in `data/works-metadata.json` with line ranges
+- **No auth:** Worker is publicly accessible by default. Don't add any auth — user wants it freely available.
+- **PDF is committed:** Unlike the original plan, the PDF is in the repo, so the parse step is reproducible without external downloads.
+
+## Quick start for the new session
+
+```bash
+git fetch origin
+git checkout claude/port-chaucer-mcp-W7...
+npm install
+# Fix PDF filename in scripts/parse-chaucer.ts
+npm run parse -- --inspect
+# Report findings, then proceed with full parse and tool wire-up
+```
